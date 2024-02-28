@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="journey/css/style.css" type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Journay</title>
+</head>
+<body>
+<div id="main_site">
+
+    <h2>The Blue Drop Journey</h2>
+
+    <br />
+    <div id='saving'></div>
+    <br />
+    <div id="interface">
+        <button id="start"class="btn btn-primary btn-galaxy">start</button>
+        <button id="stop"class="btn btn-primary btn-galaxy">stop</button>
+        <button id="restart"class="btn btn-primary btn-galaxy">restart</button>
+        <button id="fullS"class="btn btn-primary btn-galaxy">pełny ekran</button>
+        <button id="sound"class="btn btn-primary btn-galaxy">dźwięk</button>
+
+        <canvas id="canvas1" class="canvas" width="1024" height="768">Twoja przeglądarka nie obsługuje elementu canvas. Zaktualizuj ją do nowszej wersji.</canvas>
+
+        <canvas id="miniMap" class="canvasSmall" width="800" height="38">Twoja przeglądarka nie obsługuje elementu canvas. Zaktualizuj ją do nowszej wersji.</canvas>
+
+
+
+        <div id="zasadyGry"style="text-align: left">
+            <h3> Zasady Gry </h3>
+            Gra "The blue drop journey" polega na przejściu niebieską kroplą przez planszę zbierając przy tym jabłka, gruszki i krople wody:
+            <img src="journey/image/items.png" alt="owoce i kropla do złapania w grze">
+            Złapanie jabłka dodaje jeden punkt, gruszki 5, a kropli 10. Na początku gry gracz ma 10 punktów życia które traci spadając w przepaść(3), stykając się z ogniem lub meteorytem(1).
+            <h3>Wymagania systemowe</h3>
+            Gra działa w przeglądarkach wspierających elementy HTML5 takie jak: 'canvas' i 'audio', czyli w każdej aktualnej wersji popularnych przeglądarek. UWAGA: Jeśli dźwięk i obraz przycina to znaczy, że Twoja wersja przeglądarki już obsługuje HTML5, ale jeszcze nie robi tego najlepiej, aktualizacja powinna pomóc.
+            <h3>Sterowanie</h3>
+            Sterować można za pomocą klawiszy: W,S,A,D oraz strzałek na klawiaturze. Jednak strzałki sprawdzają się dobrze w trybie pełnoekranowym ponieważ normalnie służą też do przewijania strony. Aby wystartować lub zatrzymać grę wystarczy kliknąć lewym klawiszem myszki na oknie z grą lub na odpowiednim przycisku nad oknem gry.
+        </div>
+    </div>
+</div>
+
+<audio id="dzwiekZderzen">
+
+    <source src="journey/audio/owoc.ogg" type='audio/ogg' />
+
+    <source src="journey/audio/owoc.mp3" type="audio/mpeg" />
+
+</audio>
+
+<audio id="dzwiekUpadku">
+
+    <source src="journey/audio/upadek.ogg" type='audio/ogg' />
+
+    <source src="journey/audio/upadek.mp3" type="audio/mpeg" />
+
+</audio>
+
+<audio id="dzwiekBiegu">
+
+    <source src="journey/audio/kroki.ogg" type='audio/ogg' />
+
+    <source src="journey/audio/kroki.mp3" type="audio/mpeg" />
+
+</audio>
+
+<audio id="dzwiekGry" loop>
+
+    <source src="journey/audio/tlo.ogg" type='audio/ogg' />
+
+    <source src="journey/audio/tlo.mp3" type="audio/mpeg" />
+
+</audio>
+
+<script type="text/javascript" src="journey/js/zmienne.js"></script>
+<script type="text/javascript" src="journey/js/wczytywanie.js"></script>
+<script type="text/javascript" src="journey/js/obiekty.js"></script>
+<script type="text/javascript" src="journey/js/klawiatura.js"></script>
+<script type="text/javascript" src="journey/js/animacje.js"></script>
+<script type="text/javascript" src="journey/js/scena.js"></script>
+</body>
+</html>

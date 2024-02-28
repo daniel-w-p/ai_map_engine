@@ -1,0 +1,55 @@
+
+.imgCan
+{
+	height: 250px;
+	width: 800px;
+	max-width: 800px;
+	margin: auto;
+}
+
+.canvas
+{
+	margin: auto;
+	cursor: pointer;
+	color: white;
+	width: 1024px;
+	height: 768px;
+	background: white;
+	box-shadow: 3px 3px 10px #aac4ff;
+}
+.canvasSmall
+{
+	height: 38px;
+	visibility: hidden;
+}
+.btn-galaxy
+{
+	width: 100px;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius:0;
+}
+
+#interface
+{
+	text-align:center;
+}
+
+@media (max-width:1200px) {
+	
+.canvas
+{
+	width: 800px;
+	height: 600px;
+}
+
+}
+
+@media (max-width:992px) {
+	
+.canvas
+{
+	width: 640px;
+	height: 480px;
+}
+
+}
