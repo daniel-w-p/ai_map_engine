@@ -1,5 +1,10 @@
 # AI map engine
 
+## Języki
+
+- [English](README_EN.md)
+- [Polski](README.md)
+
 ## Opis
 
 Ten projekt ma na celu przekształcenie istniejącej - napisanej wiele lat temu przeze mnie - prostej gry, stworzonej pierwotnie w JavaScript, na język Python. 
@@ -17,7 +22,9 @@ Projekt składa się z trzech głównych części:
 ## Szczegóły
 
 ### Przepisanie Gry na Python
-- Mapy: Gra ma taką zaletę (dla tego projektu), że tworzy 'świat gry' z mini mapki na której każdy piksel ma inne znaczenie i jest inaczej reprezentowany w 'świecie gry' w zależności od jego koloru,
+- Mapy: Gra ma taką zaletę (dla tego projektu), że tworzy 'świat gry' z mini mapki na której każdy piksel ma inne znaczenie i jest inaczej reprezentowany w 'świecie gry' w zależności od jego koloru, 
+  - przykładowa mini-mapa:
+  ![Przykładowa mini mapa do budowy świata gry](media/img/map.png)
 - Wybór biblioteki graficznej: Do realizacji gry w Pythonie, postanowiłem wykorzystać bibliotekę Pygame, która oferuje szerokie możliwości w zakresie tworzenia interfejsu graficznego i obsługi zdarzeń.
 - Modularyzacja kodu: Przy przenoszeniu logiki gry, wprowadzę zmiany aby podzielić kod na moduły odpowiadające różnym aspektom gry (np. logika gry, renderowanie grafiki, obsługa wejścia), 
 co ułatwi późniejsze wprowadzanie zmian i integrację z sieciami neuronowymi.
