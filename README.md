@@ -7,7 +7,7 @@
 
 ## Opis
 
-Ten projekt ma na celu przekształcenie istniejącej - napisanej wiele lat temu przeze mnie - prostej gry, stworzonej pierwotnie w JavaScript, na język Python. 
+Ten projekt ma na celu przekształcenie istniejącej - napisanej wiele lat temu przeze mnie - prostej gry, stworzonej pierwotnie w JavaScript, na Python (Pygame). 
 Pierwszym celem jest przeniesienie mechaniki i funkcjonalności gry, ale głównym celem jest rozwinięcie jej o nowe możliwości 
 dzięki wykorzystaniu technik uczenia maszynowego. Przy tym przede wszystkim zgłebienie tematu, poznanie możliwości i ograniczeń wykorzystania AI w tworzeniu gier.
 
@@ -24,6 +24,7 @@ Projekt składa się z trzech głównych części:
 ### Przepisanie Gry na Python
 - Mapy: Gra ma taką zaletę (dla tego projektu), że tworzy 'świat gry' z mini mapki na której każdy piksel ma inne znaczenie i jest inaczej reprezentowany w 'świecie gry' w zależności od jego koloru, 
   - przykładowa mini-mapa:
+  
   ![Przykładowa mini mapa do budowy świata gry](media/img/map.png)
 - Wybór biblioteki graficznej: Do realizacji gry w Pythonie, postanowiłem wykorzystać bibliotekę Pygame, która oferuje szerokie możliwości w zakresie tworzenia interfejsu graficznego i obsługi zdarzeń.
 - Modularyzacja kodu: Przy przenoszeniu logiki gry, wprowadzę zmiany aby podzielić kod na moduły odpowiadające różnym aspektom gry (np. logika gry, renderowanie grafiki, obsługa wejścia), 

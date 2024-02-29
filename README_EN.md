@@ -20,6 +20,7 @@ The project consists of three main parts:
 ### Rewriting the Game in Python
 - Maps: The game has the advantage (for this project) of creating a 'game world' from a mini-map where each pixel has a different meaning and is represented differently in the 'game world' depending on its color.
   - mini-map example:
+  
     ![Mini-map example](media/img/map.png)
 - Choosing a graphics library: For implementing the game in Python, I decided to use the Pygame library, which offers extensive capabilities for creating graphical interfaces and event handling.
 - Code modularization: In transferring the game's logic, I will introduce changes to divide the code into modules corresponding to different aspects of the game (e.g., game logic, graphics rendering, input handling), facilitating later changes and integration with neural networks.
