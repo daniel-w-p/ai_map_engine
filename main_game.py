@@ -2,6 +2,7 @@ import pygame
 from sys import exit
 from new_game import consts
 from new_game import Drawing
+from new_game import GameCrl
 
 
 def run_game():
@@ -11,20 +12,24 @@ def run_game():
     clock = pygame.time.Clock()
 
     draw_object = Drawing()
-
-    screen.blit(draw_object.background, (0, 0))
-    screen.blit(draw_object.stats_panel, (0, 0))
+    game_control = GameCrl()
 
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+        if consts.GAME_MODE != consts.GameMode.API.value:
+            game_control.normal_loop_body()
+        else:
+            game_control.api_loop_body()
 
-        draw_object.refresh_on_screen(screen)
+        if not game_control.game.is_game_over():
+            draw_object.draw_statics(screen)
+            draw_object.refresh_on_screen(screen)
+        else:
+            draw_object.draw_intro(screen)
 
         pygame.display.update()
-        clock.tick(consts.FRAME_RATE)
+
+        if consts.GAME_MODE != consts.GameMode.API.value:
+            clock.tick(consts.FRAME_RATE)
 
 
 if __name__ == '__main__':

@@ -1,74 +1,63 @@
 import pygame
-from .consts import UPPER_PANEL_FONT_SIZE, FONT_COLOR, STATS_PADDING_WIDTH
+from .consts import FONT_COLOR_DARK, FONT_COLOR_LIGHT, FONT_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Drawing:
     def __init__(self):
         self._background = None
         self._stats_panel = None
+        self._intro_panel = None
+
         self._game_map_text = None
         self._game_level_text = None
         self._game_score_text = None
         self._game_high_score_text = None
         self._player_life_text = None
 
+        self._game_map_label = None
+        self._game_level_label = None
+        self._game_score_label = None
+        self._game_high_score_label = None
+        self._player_life_label = None
+
+        self._dynamic_text_font = pygame.font.Font(FONT_PATH, 22)
+
         self.load_background("new_game/media/images/back.png")
         self.load_panel("new_game/media/images/panel.png")
+        self.load_intro_panel("new_game/media/images/window.png")
         self.init_all_texts()
 
-    @property
-    def background(self):
-        return self._background
+    def load_background(self, value: str):
+        self._background = pygame.image.load(value).convert()
 
-    @property
-    def stats_panel(self):
-        return self._stats_panel
+    def load_panel(self, value: str):
+        self._stats_panel = pygame.image.load(value).convert()
 
-    @property
-    def game_map_text(self):
-        return self._game_map_text
+    def load_intro_panel(self, value: str):
+        self._intro_panel = pygame.image.load(value).convert()
 
-    @property
-    def game_level_text(self):
-        return self._game_level_text
+    def set_game_map_text(self, value: str):
+        self._game_map_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    @property
-    def game_score_text(self):
-        return self._game_score_text
+    def set_game_level_text(self, value: str):
+        self._game_level_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    @property
-    def game_high_score_text(self):
-        return self._game_high_score_text
+    def set_game_score_text(self, value: str):
+        self._game_score_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    @property
-    def player_life_text(self):
-        return self._player_life_text
+    def set_game_high_score_text(self, value: str):
+        self._game_high_score_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    def load_background(self, value):
-        self._background = pygame.image.load(value)
+    def set_player_life_text(self, value: str):
+        self._player_life_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    def load_panel(self, value):
-        self._stats_panel = pygame.image.load(value)
-
-    def set_game_map_text(self, value):
-        font = pygame.font.Font(None, UPPER_PANEL_FONT_SIZE)
-        self._game_map_text = font.render(value, True, FONT_COLOR)
-
-    def set_game_level_text(self, value):
-        font = pygame.font.Font(None, UPPER_PANEL_FONT_SIZE)
-        self._game_level_text = font.render(value, True, FONT_COLOR)
-
-    def set_game_score_text(self, value):
-        font = pygame.font.Font(None, UPPER_PANEL_FONT_SIZE)
-        self._game_score_text = font.render(value, True, FONT_COLOR)
-
-    def set_game_high_score_text(self, value):
-        font = pygame.font.Font(None, UPPER_PANEL_FONT_SIZE)
-        self._game_high_score_text = font.render(value, True, FONT_COLOR)
-
-    def set_player_life_text(self, value):
-        font = pygame.font.Font(None, UPPER_PANEL_FONT_SIZE)
-        self._player_life_text = font.render(value, True, FONT_COLOR)
+    def init_static_labels(self):
+        font = pygame.font.Font(FONT_PATH, 15)
+        self._player_life_label = font.render("LIVE", True, FONT_COLOR_LIGHT)
+        self._game_level_label = font.render("LEVEL", True, FONT_COLOR_LIGHT)
+        self._game_map_label = font.render("MAP", True, FONT_COLOR_LIGHT)
+        self._game_score_label = font.render("SCORE", True, FONT_COLOR_LIGHT)
+        self._game_high_score_label = font.render("HIGH SCORE", True, FONT_COLOR_LIGHT)
 
     def init_all_texts(self):
         self.set_game_map_text('0')
@@ -77,9 +66,34 @@ class Drawing:
         self.set_game_high_score_text('0')
         self.set_player_life_text('0')
 
+    def draw_intro(self, screen):
+        screen.fill((120, 178, 141))
+        intro_rect = self._intro_panel.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
+        screen.blit(self._intro_panel, intro_rect)
+
+    def draw_statics(self, screen):
+        left_margin = 50
+        upper_margin = 0
+        label_space = 200
+
+        screen.blit(self._background, (0, 0))
+        screen.blit(self._stats_panel, (0, 0))
+
+        self.init_static_labels()
+
+        screen.blit(self._player_life_label, (left_margin, upper_margin))
+        screen.blit(self._game_level_label, (left_margin + 1 * label_space, upper_margin))
+        screen.blit(self._game_map_label, (left_margin + 2 * label_space, upper_margin))
+        screen.blit(self._game_score_label, (left_margin + 3 * label_space, upper_margin))
+        screen.blit(self._game_high_score_label, (left_margin + 4 * label_space, upper_margin))
+
     def refresh_on_screen(self, screen):
-        screen.blit(self.player_life_text, (100, 20))
-        screen.blit(self.game_level_text, (100 + 1 * STATS_PADDING_WIDTH, 20))
-        screen.blit(self.game_map_text, (100 + 2 * STATS_PADDING_WIDTH, 20))
-        screen.blit(self.game_score_text, (100 + 3 * STATS_PADDING_WIDTH, 20))
-        screen.blit(self.game_high_score_text, (100 + 4 * STATS_PADDING_WIDTH, 20))
+        left_margin = 100
+        upper_margin = 12
+        text_space = 200
+
+        screen.blit(self._player_life_text, (left_margin, upper_margin))
+        screen.blit(self._game_level_text, (left_margin + 1 * text_space, upper_margin))
+        screen.blit(self._game_map_text, (left_margin + 2 * text_space, upper_margin))
+        screen.blit(self._game_score_text, (left_margin + 3 * text_space, upper_margin))
+        screen.blit(self._game_high_score_text, (left_margin + 4 * text_space, upper_margin))
