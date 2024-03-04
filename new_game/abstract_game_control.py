@@ -45,7 +45,7 @@ class AbstractGameControl:
 
         reward = self._game.reward
 
-        done = self._game.game_over
+        done = self._game.is_game_over
 
         return state, reward, done
 

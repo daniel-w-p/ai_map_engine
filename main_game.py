@@ -1,5 +1,4 @@
 import pygame
-from sys import exit
 from new_game import consts
 from new_game import Drawing
 from new_game import GameCrl
@@ -15,21 +14,21 @@ def run_game():
     game_control = GameCrl()
 
     while True:
-        if consts.GAME_MODE != consts.GameMode.API.value:
+        if consts.GAME_MODE == consts.GameMode.NORMAL.value:
+            # count all
             game_control.normal_loop_body()
+            # draw all
+            if not game_control.game.is_game_over():
+                draw_object.draw_statics(screen)
+                draw_object.refresh_on_screen(screen)
+            else:
+                draw_object.draw_intro(screen)
+            # control environ
+            clock.tick(consts.FRAME_RATE)
         else:
             game_control.api_loop_body()
 
-        if not game_control.game.is_game_over():
-            draw_object.draw_statics(screen)
-            draw_object.refresh_on_screen(screen)
-        else:
-            draw_object.draw_intro(screen)
-
         pygame.display.update()
-
-        if consts.GAME_MODE != consts.GameMode.API.value:
-            clock.tick(consts.FRAME_RATE)
 
 
 if __name__ == '__main__':

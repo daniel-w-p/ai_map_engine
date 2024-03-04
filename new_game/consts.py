@@ -3,7 +3,8 @@ from enum import Enum
 
 class GameMode(Enum):
     NORMAL = 1
-    API = 2
+    API_PLAY = 2
+    API_LEARN = 3
 
 
 GAME_MODE = GameMode.NORMAL.value
