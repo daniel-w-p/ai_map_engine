@@ -1,5 +1,5 @@
 import pygame
-from .consts import FONT_COLOR_DARK, FONT_COLOR_LIGHT, FONT_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
+from .consts import FONT_COLOR_DARK, FONT_COLOR_LIGHT, FONT_PATH, BOLD_FONT_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Drawing:
@@ -19,6 +19,8 @@ class Drawing:
         self._game_score_label = None
         self._game_high_score_label = None
         self._player_life_label = None
+
+        self._intro_label = None
 
         self._dynamic_text_font = pygame.font.Font(FONT_PATH, 22)
 
@@ -70,6 +72,11 @@ class Drawing:
         screen.fill((120, 178, 141))
         intro_rect = self._intro_panel.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
         screen.blit(self._intro_panel, intro_rect)
+        font = pygame.font.Font(BOLD_FONT_PATH, 20)
+        self._intro_label = font.render("PRESS SPACE", True, FONT_COLOR_DARK)
+        screen.blit(self._intro_label, self._intro_label.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 12)))
+        self._intro_label = font.render("TO START", True, FONT_COLOR_DARK)
+        screen.blit(self._intro_label, self._intro_label.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 12)))
 
     def draw_statics(self, screen):
         left_margin = 50

@@ -21,3 +21,4 @@ SCREEN_HEIGHT = 768
 FONT_COLOR_DARK = "BROWN"
 FONT_COLOR_LIGHT = "GOLD"
 FONT_PATH = "new_game/media/fonts/Lato-Regular.ttf"
+BOLD_FONT_PATH = "new_game/media/fonts/Lato-Bold.ttf"

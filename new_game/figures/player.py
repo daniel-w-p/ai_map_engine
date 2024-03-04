@@ -9,8 +9,8 @@ class Player(Sprite):
     def __init__(self):
         super().__init__()
 
-        self._image_move = pygame.image.load("new_game/media/images/figureR.png").convert_alpha()
-        self._image_jump = pygame.image.load("new_game/media/images/jumpR.png").convert_alpha()
+        self._image_move = pygame.image.load("new_game/media/images/figureP.png").convert_alpha()
+        self._image_jump = pygame.image.load("new_game/media/images/jumpP.png").convert_alpha()
 
         self._animation_index = 0
         self._max_anim_index = 6
