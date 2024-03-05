@@ -65,4 +65,4 @@ pip install -r requirements.txt
 ```python train_agent.py```
 
 ### Running the map generation process
-```python generate_maps.py```
+```python maps_generator.py```

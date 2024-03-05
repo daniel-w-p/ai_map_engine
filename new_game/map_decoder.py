@@ -2,8 +2,6 @@ import numpy as np
 from PIL import Image
 from enum import Enum
 
-from .consts import SCREEN_WIDTH
-
 
 class GameParticles(Enum):
     WOOD_START = 0
@@ -45,12 +43,9 @@ class MapDecoder:
         for i, row in enumerate(self._img_array):
             for j, pixel in enumerate(row):
                 if not tuple(pixel) == (255, 255, 255):
-                    self._elements_dict[(i * self._one_pixel, j * self._one_pixel)] = self.PARTICLES_DICTIONARY[tuple(pixel)]
+                    self._elements_dict[(j * self._one_pixel, i * self._one_pixel)] = self.PARTICLES_DICTIONARY[tuple(pixel)]
 
     @property
     def elements_dictionary(self):
         return self._elements_dict
 
-    @property
-    def particles_dictionary(self):
-        return self.PARTICLES_DICTIONARY

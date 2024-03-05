@@ -16,8 +16,10 @@ class Player(Sprite):
         self._max_anim_index = 6
         self._move_width = self._image_move.get_rect().width / 6
         self._jump_width = self._image_jump.get_rect().width / 12
-        self._rect_m = pygame.Rect(0, 0, self._move_width, self._image_move.get_rect().height)
-        self._rect_j = pygame.Rect(0, 0, self._jump_width, self._image_jump.get_rect().height)
+        self._rect_m = pygame.Rect(110, 500, self._move_width, self._image_move.get_rect().height)
+        self._rect_j = pygame.Rect(110, 500, self._jump_width, self._image_jump.get_rect().height)
+        self._move_subsurface_rect = pygame.Rect(0, 0, self._move_width, self._image_move.get_rect().height)
+        self._jump_subsurface_rect = pygame.Rect(0, 0, self._jump_width, self._image_jump.get_rect().height)
 
         self._life = 20
         self._velocity = 0
@@ -28,6 +30,20 @@ class Player(Sprite):
 
         self.group = pygame.sprite.GroupSingle()
         self.group.add(self)
+
+    @property
+    def image(self):
+        if self._jump_v:
+            return self._image_jump.subsurface(self._jump_subsurface_rect)
+        else:
+            return self._image_move.subsurface(self._move_subsurface_rect)
+
+    @property
+    def rect(self):
+        if self._jump_v:
+            return self._rect_j
+        else:
+            return self._rect_m
 
     def jump(self):
         pass

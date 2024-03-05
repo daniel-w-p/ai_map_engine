@@ -26,9 +26,6 @@ class AbstractGameControl:
     def get_action_from_ai(self):
         return 0
 
-    def game_step(self):
-        self._game.game_step()
-
     def execute_action(self, api_action):
         if api_action == GameAction.QUIT.value:
             pygame.quit()
@@ -70,7 +67,7 @@ class AbstractGameControl:
 
             self._game.game_events(event)
 
-        self.game_step()
+        self._game.game_step()
 
     def api_loop_body(self):
         action = self.get_action_from_ai()
@@ -82,4 +79,4 @@ class AbstractGameControl:
 
         if done:
             self.execute_action(GameAction.QUIT.value)
-        self.game_step()
+        self._game.game_step()

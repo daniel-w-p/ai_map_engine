@@ -1,10 +1,9 @@
 import pygame.time
 from enum import Enum
 
-from new_game.map_decoder import MapDecoder
-from new_game.figures import Player
-from new_game.figures import Wood
-from .consts import SCREEN_WIDTH
+from new_game.map_decoder import MapDecoder, GameParticles
+from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
+from .consts import SCREEN_WIDTH, SCREEN_SIDE_MARGIN
 
 
 class GameState(Enum):
@@ -16,9 +15,9 @@ class GameState(Enum):
 class Game:
     def __init__(self):
         self._player = Player()
-        self._obstacles = []
-        self._environs = []
-        self._rewards = []
+        self._obstacles = pygame.sprite.Group()
+        self._environs = pygame.sprite.Group()
+        self._rewards = pygame.sprite.Group()
         self._map = 0
         self._level = 0
         self._score = 0
@@ -31,7 +30,7 @@ class Game:
 
         self._actual_left = 0
         self._actual_right = SCREEN_WIDTH
-        self._screen_margin = SCREEN_WIDTH / 2
+        self._screen_margin = SCREEN_SIDE_MARGIN
 
         self.obstacles_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.obstacles_event, 500)
@@ -46,7 +45,7 @@ class Game:
 
         self._actual_left = 0
         self._actual_right = SCREEN_WIDTH
-        self._screen_margin = SCREEN_WIDTH / 2
+        self._screen_margin = SCREEN_SIDE_MARGIN
 
         self._play_time_start = pygame.time.get_ticks()
         self.init_map()
@@ -56,9 +55,47 @@ class Game:
         for k, v in self._map_decoder.elements_dictionary.items():
             w, h = k
             if self._actual_left - self._screen_margin < w < self._actual_right + self._screen_margin:
-                if v in self._map_decoder.particles_dictionary:
-                    if self._map_decoder.particles_dictionary[v].value < 3:
-                        wood = Wood()
+                if v.value < 3:
+                    wood = Wood(ImagePart(v.value % 3))
+                    wood.rect.x = w
+                    wood.rect.y = h
+                    self._environs.add(wood)
+                elif v.value < 6:
+                    cloud = Cloud(ImagePart(v.value % 3))
+                    cloud.rect.x = w
+                    cloud.rect.y = h
+                    self._environs.add(cloud)
+                elif v == GameParticles.PEAR:
+                    pear = Pear()
+                    pear.rect.x = w
+                    pear.rect.y = h
+                    self._rewards.add(pear)
+                elif v == GameParticles.APPLE:
+                    apple = Apple()
+                    apple.rect.x = w
+                    apple.rect.y = h
+                    self._rewards.add(apple)
+                elif v == GameParticles.WATER:
+                    water = Water()
+                    water.rect.x = w
+                    water.rect.y = h
+                    self._rewards.add(water)
+                elif v == GameParticles.FIRE:
+                    fire = Fire()
+                    fire.rect.x = w
+                    fire.rect.y = h
+                    self._obstacles.add(fire)
+                elif v == GameParticles.METEOR:
+                    meteor = Meteor()
+                    meteor.rect.x = w
+                    meteor.rect.y = h
+                    self._obstacles.add(meteor)
+
+    def draw_stage(self, screen):
+        self._environs.draw(screen)
+        self._rewards.draw(screen)
+        self._obstacles.draw(screen)
+        self._player.draw(screen)
 
     def pause_game(self):
         if self._game_state == GameState.PAUSE.value:

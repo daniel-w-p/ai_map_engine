@@ -21,6 +21,7 @@ def run_game():
             if not game_control.game.is_game_over():
                 draw_object.draw_statics(screen)
                 draw_object.refresh_on_screen(screen)
+                game_control.game.draw_stage(screen)
             else:
                 draw_object.draw_intro(screen)
             # control environ
