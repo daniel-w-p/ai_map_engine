@@ -1,6 +1,10 @@
 import pygame.time
-from new_game.figures import Player
 from enum import Enum
+
+from new_game.map_decoder import MapDecoder
+from new_game.figures import Player
+from new_game.figures import Wood
+from .consts import SCREEN_WIDTH
 
 
 class GameState(Enum):
@@ -14,6 +18,7 @@ class Game:
         self._player = Player()
         self._obstacles = []
         self._environs = []
+        self._rewards = []
         self._map = 0
         self._level = 0
         self._score = 0
@@ -22,6 +27,11 @@ class Game:
         self._game_state = GameState.END.value
         self._environment_state = None
         self._play_time_start = pygame.time.get_ticks()
+        self._map_decoder = MapDecoder()
+
+        self._actual_left = 0
+        self._actual_right = SCREEN_WIDTH
+        self._screen_margin = SCREEN_WIDTH / 2
 
         self.obstacles_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.obstacles_event, 500)
@@ -33,7 +43,22 @@ class Game:
         self._distance = 0
         self._game_state = GameState.RUN.value
         self._environment_state = None
+
+        self._actual_left = 0
+        self._actual_right = SCREEN_WIDTH
+        self._screen_margin = SCREEN_WIDTH / 2
+
         self._play_time_start = pygame.time.get_ticks()
+        self.init_map()
+
+    def init_map(self):
+        self._map_decoder.prepare_map()
+        for k, v in self._map_decoder.elements_dictionary.items():
+            w, h = k
+            if self._actual_left - self._screen_margin < w < self._actual_right + self._screen_margin:
+                if v in self._map_decoder.particles_dictionary:
+                    if self._map_decoder.particles_dictionary[v].value < 3:
+                        wood = Wood()
 
     def pause_game(self):
         if self._game_state == GameState.PAUSE.value:
@@ -56,7 +81,8 @@ class Game:
                 obstacle.update_animation()
 
     def game_step(self):
-        pass
+        if not self._player.alive:
+            self._game_state = GameState.END.value
 
     def update_environment_state(self):
         pass

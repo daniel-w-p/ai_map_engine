@@ -4,9 +4,9 @@ from enum import Enum
 
 
 class ImagePart(Enum):
-    left = 0
-    middle = 1
-    right = 2
+    LEFT = 0
+    MIDDLE = 1
+    RIGHT = 2
 
 
 class Environ(Sprite):
@@ -15,13 +15,13 @@ class Environ(Sprite):
 
         self._img = None
 
-        self._image_part = ImagePart.left
+        self._image_part = ImagePart.LEFT
         self._frames = len(ImagePart)
         self._img_frame_width = None
 
         self._rect = None
 
-    def set_frames(self, frame: ImagePart) -> None:
+    def set_frame(self, frame: ImagePart) -> None:
         self._rect = pygame.Rect(0, 0, self._img_frame_width, self._img.get_rect().height)
 
 

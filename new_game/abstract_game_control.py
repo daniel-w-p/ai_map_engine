@@ -1,6 +1,8 @@
 import pygame
 from sys import exit
 from .game import Game
+from .consts import GAME_MODE, GameMode
+
 from enum import Enum
 
 
@@ -66,11 +68,18 @@ class AbstractGameControl:
                     else:
                         self._game.pause_game()
 
+            self._game.game_events(event)
+
         self.game_step()
 
     def api_loop_body(self):
         action = self.get_action_from_ai()
         state, reward, done = self.game_action_api(action)
+
+        if GAME_MODE == GameMode.API_PLAY:
+            for event in pygame.event.get():
+                self._game.game_events(event)
+
         if done:
             self.execute_action(GameAction.QUIT.value)
         self.game_step()
