@@ -33,7 +33,7 @@ class Game:
         self._screen_margin = SCREEN_SIDE_MARGIN
 
         self.obstacles_event = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.obstacles_event, 500)
+        pygame.time.set_timer(self.obstacles_event, 100)
 
     def reset_game(self):
         self._map = 0
@@ -97,6 +97,27 @@ class Game:
         self._obstacles.draw(screen)
         self._player.draw(screen)
 
+    def game_step(self):
+        self._environs.update()
+        self._rewards.update()
+        self._obstacles.update()
+        self._player.update()
+
+        collisions_env = pygame.sprite.spritecollide(self._player, self._environs, False)
+        collisions_rew = pygame.sprite.spritecollide(self._player, self._rewards, True)
+        collisions_hurt = pygame.sprite.spritecollide(self._player, self._obstacles, False)
+
+        if collisions_env:
+            for environ in collisions_env:
+                self._player.stop(
+                    environ.rect.y <= self._player.rect.y + self._player.rect.height < environ.rect.y + environ.rect.height)
+        if collisions_hurt:
+            for hurt in collisions_hurt:
+                self._player.hurt()
+
+        if self._player.is_dead:
+            self._game_state = GameState.END.value
+
     def pause_game(self):
         if self._game_state == GameState.PAUSE.value:
             self._game_state = GameState.RUN.value
@@ -112,14 +133,13 @@ class Game:
     def player_right(self):
         self._player.move(True)
 
+    def player_retard(self):
+        self._player.retard()
+
     def game_events(self, event):
         if event.type == self.obstacles_event:
             for obstacle in self._obstacles:
                 obstacle.update_animation()
-
-    def game_step(self):
-        if not self._player.alive:
-            self._game_state = GameState.END.value
 
     def update_environment_state(self):
         pass
@@ -150,3 +170,6 @@ class Game:
 
     def is_game_paused(self):
         return self._game_state == GameState.PAUSE.value
+
+    def is_game_running(self):
+        return self._game_state == GameState.RUN.value

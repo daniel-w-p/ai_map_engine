@@ -1,7 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
-from ..consts import SCREEN_SIDE_MARGIN
+from ..consts import SCREEN_SIDE_MARGIN, SCREEN_WIDTH
 
 
 class Obstacles(Sprite):
@@ -19,13 +19,14 @@ class Obstacles(Sprite):
         self._img_frame_width = None
 
     def update_animation(self):
-        self._animation_index += 1
-        if self._animation_index >= self._max_anim_index:
-            self._animation_index = 0
-        self._subsurface_rect = pygame.Rect(self._animation_index * self._img_frame_width,
-                                            0,
-                                            self._img_frame_width + self._animation_index * self._img_frame_width,
-                                            self._img.get_rect().height)
+        if self._is_visible:
+            self._animation_index += 1
+            if self._animation_index >= self._max_anim_index:
+                self._animation_index = 0
+            self._subsurface_rect = pygame.Rect(self._animation_index * self._img_frame_width,
+                                                0,
+                                                self._img_frame_width,
+                                                self._img.get_rect().height)
 
     def update_position(self):
         pass
@@ -41,8 +42,11 @@ class Obstacles(Sprite):
             self.kill()
 
     def update(self):
+        if 0 < self._rect.x < SCREEN_WIDTH:
+            self._is_visible = True
+        else:
+            self._is_visible = False
         if self._is_visible:
-            self.update_animation()
             self.update_position()
         self.destruct()
 
@@ -65,9 +69,13 @@ class Fire(Obstacles):
         self._max_anim_index = 6
 
         self._img = pygame.image.load("new_game/media/images/fire.png").convert_alpha()
-        self._img_frame_width = self._img.get_rect().width / self._max_anim_index
+        self._img_frame_width = self._img.get_rect().width // self._max_anim_index
 
         self._rect = pygame.Rect(0, 0, self._img_frame_width, self._img.get_rect().height)
+        self._subsurface_rect = pygame.Rect(0,
+                                            0,
+                                            self._img_frame_width,
+                                            self._img.get_rect().height)
 
 
 class Meteor(Obstacles):
@@ -75,9 +83,13 @@ class Meteor(Obstacles):
         super().__init__()
 
         self._img = pygame.image.load("new_game/media/images/meteor.png").convert_alpha()
-        self._img_frame_width = self._img.get_rect().width / self._max_anim_index
+        self._img_frame_width = self._img.get_rect().width // self._max_anim_index
 
         self._rect = pygame.Rect(0, 0, self._img_frame_width, self._img.get_rect().height)
+        self._subsurface_rect = pygame.Rect(0,
+                                            0,
+                                            self._img_frame_width,
+                                            self._img.get_rect().height)
 
     def update_position(self):
         self._rect.x -= 1

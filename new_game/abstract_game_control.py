@@ -32,6 +32,12 @@ class AbstractGameControl:
             exit()
         if api_action == GameAction.JUMP.value:
             self._game.player_jump()
+        if api_action == GameAction.RUN_LEFT.value:
+            self._game.player_left()
+        if api_action == GameAction.RUN_RIGHT.value:
+            self._game.player_right()
+        if api_action == GameAction.NO_MOVE.value:
+            self._game.player_retard()
         if api_action == GameAction.PAUSE.value:
             self._game.pause_game()
         # TODO MORE ACTION
@@ -59,15 +65,22 @@ class AbstractGameControl:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     self.game_action_normal(GameAction.JUMP.value)
+                if event.key == pygame.K_a:
+                    self.game_action_normal(GameAction.RUN_LEFT.value)
+                if event.key == pygame.K_d:
+                    self.game_action_normal(GameAction.RUN_RIGHT.value)
                 if event.key == pygame.K_SPACE:
                     if self._game.is_game_over():
                         self._game.reset_game()
                     else:
                         self._game.pause_game()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_a or event.key == pygame.K_d:
+                    self.game_action_normal(GameAction.NO_MOVE.value)
 
             self._game.game_events(event)
-
-        self._game.game_step()
+        if self._game.is_game_running():
+            self._game.game_step()
 
     def api_loop_body(self):
         action = self.get_action_from_ai()
