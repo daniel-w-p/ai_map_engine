@@ -2,7 +2,7 @@ import pygame
 from .consts import FONT_COLOR_DARK, FONT_COLOR_LIGHT, FONT_PATH, BOLD_FONT_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
-class Drawing:
+class GameBackground:
     def __init__(self):
         self._background = None
         self._stats_panel = None
@@ -11,13 +11,13 @@ class Drawing:
         self._game_map_text = None
         self._game_level_text = None
         self._game_score_text = None
-        self._game_high_score_text = None
+        self._game_time_text = None
         self._player_life_text = None
 
         self._game_map_label = None
         self._game_level_label = None
         self._game_score_label = None
-        self._game_high_score_label = None
+        self._game_time_label = None
         self._player_life_label = None
 
         self._intro_label = None
@@ -47,8 +47,8 @@ class Drawing:
     def set_game_score_text(self, value: str):
         self._game_score_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
-    def set_game_high_score_text(self, value: str):
-        self._game_high_score_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
+    def set_game_time_text(self, value: str):
+        self._game_time_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
 
     def set_player_life_text(self, value: str):
         self._player_life_text = self._dynamic_text_font.render(value, True, FONT_COLOR_DARK)
@@ -59,13 +59,13 @@ class Drawing:
         self._game_level_label = font.render("LEVEL", True, FONT_COLOR_LIGHT)
         self._game_map_label = font.render("MAP", True, FONT_COLOR_LIGHT)
         self._game_score_label = font.render("SCORE", True, FONT_COLOR_LIGHT)
-        self._game_high_score_label = font.render("HIGH SCORE", True, FONT_COLOR_LIGHT)
+        self._game_time_label = font.render("PLAY TIME", True, FONT_COLOR_LIGHT)
 
     def init_all_texts(self):
-        self.set_game_map_text('0')
-        self.set_game_level_text('0')
+        self.set_game_map_text('1')
+        self.set_game_level_text('1')
         self.set_game_score_text('0')
-        self.set_game_high_score_text('0')
+        self.set_game_time_text('0')
         self.set_player_life_text('0')
 
     def draw_intro(self, screen):
@@ -92,10 +92,10 @@ class Drawing:
         screen.blit(self._game_level_label, (left_margin + 1 * label_space, upper_margin))
         screen.blit(self._game_map_label, (left_margin + 2 * label_space, upper_margin))
         screen.blit(self._game_score_label, (left_margin + 3 * label_space, upper_margin))
-        screen.blit(self._game_high_score_label, (left_margin + 4 * label_space, upper_margin))
+        screen.blit(self._game_time_label, (left_margin + 4 * label_space, upper_margin))
 
     def refresh_on_screen(self, screen):
-        left_margin = 100
+        left_margin = 70
         upper_margin = 12
         text_space = 200
 
@@ -103,4 +103,4 @@ class Drawing:
         screen.blit(self._game_level_text, (left_margin + 1 * text_space, upper_margin))
         screen.blit(self._game_map_text, (left_margin + 2 * text_space, upper_margin))
         screen.blit(self._game_score_text, (left_margin + 3 * text_space, upper_margin))
-        screen.blit(self._game_high_score_text, (left_margin + 4 * text_space, upper_margin))
+        screen.blit(self._game_time_text, (left_margin + 4 * text_space, upper_margin))

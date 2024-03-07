@@ -1,6 +1,6 @@
 import pygame
 from new_game import consts
-from new_game import Drawing
+from new_game import GameBackground
 from new_game import GameCrl
 
 
@@ -10,8 +10,8 @@ def run_game():
     pygame.display.set_caption(consts.GAME_TITLE)
     clock = pygame.time.Clock()
 
-    draw_object = Drawing()
     game_control = GameCrl()
+    background = game_control.back
 
     while True:
         if consts.GAME_MODE == consts.GameMode.NORMAL.value:
@@ -19,11 +19,11 @@ def run_game():
             game_control.normal_loop_body()
             # draw all
             if not game_control.game.is_game_over():
-                draw_object.draw_statics(screen)
-                draw_object.refresh_on_screen(screen)
+                background.draw_statics(screen)
+                background.refresh_on_screen(screen)
                 game_control.game.draw_stage(screen)
             else:
-                draw_object.draw_intro(screen)
+                background.draw_intro(screen)
             # control environ
             clock.tick(consts.FRAME_RATE)
         else:

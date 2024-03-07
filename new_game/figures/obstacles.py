@@ -1,19 +1,15 @@
 import pygame
 from pygame.sprite import Sprite
 
-from ..consts import SCREEN_SIDE_MARGIN, SCREEN_WIDTH
+from ..consts import SCREEN_WIDTH
+from .a_particles import Particles
 
 
-class Obstacles(Sprite):
+class Obstacles(Particles):
     def __init__(self):
         super().__init__()
 
-        self._img = None
-        self._rect = None
-        self._subsurface_rect = None
-        self._is_visible = False
-        self._scroll_value = 0
-
+        self._is_visible = None
         self._animation_index = 0
         self._max_anim_index = 3
         self._img_frame_width = None
@@ -31,16 +27,6 @@ class Obstacles(Sprite):
     def update_position(self):
         pass
 
-    def scroll_screen(self):
-        if self._scroll_value == 0:
-            self._scroll_value = SCREEN_SIDE_MARGIN
-        else:
-            self._rect.x -= 2
-
-    def destruct(self):
-        if self._rect.x < -SCREEN_SIDE_MARGIN:
-            self.kill()
-
     def update(self):
         if 0 < self._rect.x < SCREEN_WIDTH:
             self._is_visible = True
@@ -48,18 +34,10 @@ class Obstacles(Sprite):
             self._is_visible = False
         if self._is_visible:
             self.update_position()
-        self.destruct()
+        super().update()
 
     def set_visible(self, visible):
         self._is_visible = visible
-
-    @property
-    def image(self):
-        return self._img.subsurface(self._subsurface_rect)
-
-    @property
-    def rect(self):
-        return self._rect
 
 
 class Fire(Obstacles):

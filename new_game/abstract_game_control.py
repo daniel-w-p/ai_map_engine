@@ -2,6 +2,7 @@ import pygame
 from sys import exit
 from .game import Game
 from .consts import GAME_MODE, GameMode
+from .game_background import GameBackground
 
 from enum import Enum
 
@@ -17,11 +18,16 @@ class GameAction(Enum):
 
 class AbstractGameControl:
     def __init__(self):
-        self._game = Game()
+        self._background = GameBackground()  # not related with map
+        self._game = Game(self._background)
 
     @property
     def game(self):
         return self._game
+
+    @property
+    def back(self):
+        return self._background
 
     def get_action_from_ai(self):
         return 0

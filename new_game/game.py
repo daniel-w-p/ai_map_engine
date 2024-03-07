@@ -3,7 +3,8 @@ from enum import Enum
 
 from new_game.map_decoder import MapDecoder, GameParticles
 from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
-from .consts import SCREEN_WIDTH, SCREEN_SIDE_MARGIN
+from .consts import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, TimeEvents
+from .game_background import GameBackground
 
 
 class GameState(Enum):
@@ -12,14 +13,21 @@ class GameState(Enum):
     PAUSE = 2
 
 
+class RewardPoints(Enum):
+    APPLE = 1
+    PEAR = 3
+    WATER = 7
+
+
 class Game:
-    def __init__(self):
+    def __init__(self, background: GameBackground):
         self._player = Player()
         self._obstacles = pygame.sprite.Group()
         self._environs = pygame.sprite.Group()
         self._rewards = pygame.sprite.Group()
-        self._map = 0
-        self._level = 0
+        self._game_background = background  # part of the game not related with map
+        self._map = 1
+        self._level = 1
         self._score = 0
         self._distance = 0
         self._high_score = 0
@@ -28,12 +36,18 @@ class Game:
         self._play_time_start = pygame.time.get_ticks()
         self._map_decoder = MapDecoder()
 
+        self._scroll_right = None
         self._actual_left = 0
         self._actual_right = SCREEN_WIDTH
         self._screen_margin = SCREEN_SIDE_MARGIN
 
-        self.obstacles_event = pygame.USEREVENT + 1
+        self.obstacles_event = pygame.USEREVENT + TimeEvents.OBSTACLE_EVENT.value
         pygame.time.set_timer(self.obstacles_event, 100)
+
+        self.elapsed_event = pygame.USEREVENT + TimeEvents.ELAPSED_EVENT.value
+        pygame.time.set_timer(self.elapsed_event, 500)
+
+        self.init_map()
 
     def reset_game(self):
         self._map = 0
@@ -43,53 +57,81 @@ class Game:
         self._game_state = GameState.RUN.value
         self._environment_state = None
 
+        self._scroll_right = None
         self._actual_left = 0
         self._actual_right = SCREEN_WIDTH
         self._screen_margin = SCREEN_SIDE_MARGIN
 
-        self._play_time_start = pygame.time.get_ticks()
-        self.init_map()
+        self._player.reset()
+        self.set_map_init_content()
 
-    def init_map(self):
-        self._map_decoder.prepare_map()
+        self._play_time_start = pygame.time.get_ticks()
+        self._game_background.set_player_life_text(str(self._player.life))
+
+    def set_map_part(self, width, height, kind):
+        if kind.value < 3:
+            wood = Wood(ImagePart(kind.value % 3))
+            wood.rect.x = width
+            wood.rect.y = height
+            self._environs.add(wood)
+        elif kind.value < 6:
+            cloud = Cloud(ImagePart(kind.value % 3))
+            cloud.rect.x = width
+            cloud.rect.y = height
+            self._environs.add(cloud)
+        elif kind == GameParticles.PEAR:
+            pear = Pear()
+            pear.rect.x = width
+            pear.rect.y = height
+            self._rewards.add(pear)
+        elif kind == GameParticles.APPLE:
+            apple = Apple()
+            apple.rect.x = width
+            apple.rect.y = height
+            self._rewards.add(apple)
+        elif kind == GameParticles.WATER:
+            water = Water()
+            water.rect.x = width
+            water.rect.y = height
+            self._rewards.add(water)
+        elif kind == GameParticles.FIRE:
+            fire = Fire()
+            fire.rect.x = width
+            fire.rect.y = height
+            self._obstacles.add(fire)
+        elif kind == GameParticles.METEOR:
+            meteor = Meteor()
+            meteor.rect.x = width
+            meteor.rect.y = height
+            self._obstacles.add(meteor)
+
+    def add_right_content(self):
+        for k, v in self._map_decoder.elements_dictionary.items():
+            w, h = k
+            if self._actual_right <= w < self._actual_right + self._screen_margin:
+                self.set_map_part(w - self._actual_left, h, v)
+
+    def add_left_content(self):
+        for k, v in self._map_decoder.elements_dictionary.items():
+            w, h = k
+            if self._actual_left - self._screen_margin < w <= self._actual_left:
+                self.set_map_part(w - self._actual_left, h, v)
+
+    def set_map_content(self):
         for k, v in self._map_decoder.elements_dictionary.items():
             w, h = k
             if self._actual_left - self._screen_margin < w < self._actual_right + self._screen_margin:
-                if v.value < 3:
-                    wood = Wood(ImagePart(v.value % 3))
-                    wood.rect.x = w
-                    wood.rect.y = h
-                    self._environs.add(wood)
-                elif v.value < 6:
-                    cloud = Cloud(ImagePart(v.value % 3))
-                    cloud.rect.x = w
-                    cloud.rect.y = h
-                    self._environs.add(cloud)
-                elif v == GameParticles.PEAR:
-                    pear = Pear()
-                    pear.rect.x = w
-                    pear.rect.y = h
-                    self._rewards.add(pear)
-                elif v == GameParticles.APPLE:
-                    apple = Apple()
-                    apple.rect.x = w
-                    apple.rect.y = h
-                    self._rewards.add(apple)
-                elif v == GameParticles.WATER:
-                    water = Water()
-                    water.rect.x = w
-                    water.rect.y = h
-                    self._rewards.add(water)
-                elif v == GameParticles.FIRE:
-                    fire = Fire()
-                    fire.rect.x = w
-                    fire.rect.y = h
-                    self._obstacles.add(fire)
-                elif v == GameParticles.METEOR:
-                    meteor = Meteor()
-                    meteor.rect.x = w
-                    meteor.rect.y = h
-                    self._obstacles.add(meteor)
+                self.set_map_part(w, h, v)
+
+    def set_map_init_content(self):
+        self._obstacles = pygame.sprite.Group()
+        self._environs = pygame.sprite.Group()
+        self._rewards = pygame.sprite.Group()
+        self.set_map_content()
+
+    def init_map(self):
+        self._map_decoder.prepare_map()
+        self.set_map_init_content()
 
     def draw_stage(self, screen):
         self._environs.draw(screen)
@@ -97,12 +139,7 @@ class Game:
         self._obstacles.draw(screen)
         self._player.draw(screen)
 
-    def game_step(self):
-        self._environs.update()
-        self._rewards.update()
-        self._obstacles.update()
-        self._player.update()
-
+    def player_collisions(self):
         collisions_env = pygame.sprite.spritecollide(self._player, self._environs, False)
         collisions_rew = pygame.sprite.spritecollide(self._player, self._rewards, True)
         collisions_hurt = pygame.sprite.spritecollide(self._player, self._obstacles, False)
@@ -110,10 +147,70 @@ class Game:
         if collisions_env:
             for environ in collisions_env:
                 self._player.stop(
-                    environ.rect.y <= self._player.rect.y + self._player.rect.height < environ.rect.y + environ.rect.height)
+                    environ.rect.y <= self._player.rect.y + self._player.rect.height < environ.rect.y + environ.rect.height,
+                    environ.rect.y - self._player.rect.height + 1)
         if collisions_hurt:
             for hurt in collisions_hurt:
-                self._player.hurt()
+                self._player.hurt(isinstance(hurt, Fire))
+                self._game_background.set_player_life_text(str(self._player.life))
+
+        if collisions_rew:
+            for reward in collisions_rew:
+                if isinstance(reward, Apple):
+                    self.add_reward(RewardPoints.APPLE.value)
+                if isinstance(reward, Pear):
+                    self.add_reward(RewardPoints.PEAR.value)
+                if isinstance(reward, Water):
+                    self.add_reward(RewardPoints.WATER.value)
+
+            self._game_background.set_game_score_text(str(self._score))
+
+    def player_movement(self):
+        if self._player.rect.y > SCREEN_HEIGHT:
+            self._player.fall_out()
+            self._game_background.set_player_life_text(str(self._player.life))
+
+        if self._player.rect.x > SCREEN_WIDTH * 0.75 and self._actual_right < self._map_decoder.map_real_width and self._scroll_right is None:
+            self._scroll_right = True
+            self._player.scroll_screen(self._scroll_right)
+            for env in self._environs:
+                env.scroll_screen(self._scroll_right)
+            for rew in self._rewards:
+                rew.scroll_screen(self._scroll_right)
+            for obs in self._obstacles:
+                obs.scroll_screen(self._scroll_right)
+
+        if self._player.rect.x < SCREEN_WIDTH * 0.25 and self._actual_left > 0 and self._scroll_right is None:
+            self._scroll_right = False
+            self._player.scroll_screen(self._scroll_right)
+            for env in self._environs:
+                env.scroll_screen(self._scroll_right)
+            for rew in self._rewards:
+                rew.scroll_screen(self._scroll_right)
+            for obs in self._obstacles:
+                obs.scroll_screen(self._scroll_right)
+
+        if self._scroll_right is not None and not self._player.animated_move:
+            if self._scroll_right:
+                self._scroll_right = None
+                self._actual_left += self._screen_margin
+                self._actual_right += self._screen_margin
+                self.add_right_content()
+            else:
+                self._scroll_right = None
+                self._actual_left -= self._screen_margin
+                self._actual_right -= self._screen_margin
+                self.add_left_content()
+
+    def game_step(self):
+        self._environs.update()
+        self._rewards.update()
+        self._obstacles.update()
+        self._player.update()
+
+        self.player_collisions()
+
+        self.player_movement()
 
         if self._player.is_dead:
             self._game_state = GameState.END.value
@@ -141,8 +238,15 @@ class Game:
             for obstacle in self._obstacles:
                 obstacle.update_animation()
 
+        if event.type == self.elapsed_event:
+            play_time = pygame.time.get_ticks() - self._play_time_start
+            self._game_background.set_game_time_text(str(play_time // 1000))
+
     def update_environment_state(self):
         pass
+
+    def add_reward(self, reward: float):
+        self._score += reward
 
     def calculate_reward(self):
         scale_distance_param = 0.2

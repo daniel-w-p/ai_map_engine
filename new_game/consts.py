@@ -7,6 +7,11 @@ class GameMode(Enum):
     API_LEARN = 3
 
 
+class TimeEvents(Enum):
+    OBSTACLE_EVENT = 1
+    ELAPSED_EVENT = 2
+
+
 GAME_MODE = GameMode.NORMAL.value
 
 GAME_TITLE = "Blue Drop Journey"

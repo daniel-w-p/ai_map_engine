@@ -36,7 +36,7 @@ class MapDecoder:
         self._img = Image.open("new_game/media/images/map.png")
         self._img_width, self.img_height = self._img.size
         self._img_array = np.array(self._img)
-        self._one_pixel = 20
+        self._one_pixel = 25
         self._elements_dict = {}  # key: position (in game)  value: environment particle
 
     def prepare_map(self):
@@ -48,4 +48,8 @@ class MapDecoder:
     @property
     def elements_dictionary(self):
         return self._elements_dict
+
+    @property
+    def map_real_width(self):
+        return self._img_width * self._one_pixel
 
