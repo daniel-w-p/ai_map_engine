@@ -11,6 +11,7 @@ class GameState(Enum):
     END = 0
     RUN = 1
     PAUSE = 2
+    FINISH = 3
 
 
 class RewardPoints(Enum):
@@ -104,6 +105,11 @@ class Game:
             meteor.rect.x = width
             meteor.rect.y = height
             self._obstacles.add(meteor)
+        elif kind == GameParticles.FINISH:
+            fin = Wood(ImagePart(1))
+            fin.rect.x = width
+            fin.rect.y = height
+            self._rewards.add(fin)
 
     def add_right_content(self):
         for k, v in self._map_decoder.elements_dictionary.items():
@@ -158,10 +164,13 @@ class Game:
             for reward in collisions_rew:
                 if isinstance(reward, Apple):
                     self.add_reward(RewardPoints.APPLE.value)
-                if isinstance(reward, Pear):
+                elif isinstance(reward, Pear):
                     self.add_reward(RewardPoints.PEAR.value)
-                if isinstance(reward, Water):
+                elif isinstance(reward, Water):
                     self.add_reward(RewardPoints.WATER.value)
+                elif isinstance(reward, Wood):
+                    self.add_reward(100)
+                    self._game_state = GameState.FINISH.value
 
             self._game_background.set_game_score_text(str(self._score))
 

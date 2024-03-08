@@ -18,7 +18,7 @@ def run_game():
             # count all
             game_control.normal_loop_body()
             # draw all
-            if not game_control.game.is_game_over():
+            if game_control.game.is_game_running():
                 background.draw_statics(screen)
                 background.refresh_on_screen(screen)
                 game_control.game.draw_stage(screen)
