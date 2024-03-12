@@ -45,9 +45,9 @@ co ułatwi późniejsze wprowadzanie zmian i integrację z sieciami neuronowymi.
 
 ## Technologie
 
-- Python 3.11
-- Pygame - do implementacji gry
-- TensorFlow - do implementacji sieci neuronowych
+- Python 3.10
+- Pygame 2.5
+- TensorFlow 2.10
 
 ## Instalacja
 

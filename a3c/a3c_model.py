@@ -7,6 +7,9 @@ from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, Concatenate
 
 
 class A3CModel(Model):
+    COMMON_LAYER_UNITS = 512
+    COMMON_LAYER_ACTIVATION = 'relu'  # TODO later check tanh
+
     def __init__(self, cnn_input_shape, dnn_input_shape, action_space):
         super(A3CModel, self).__init__()
         self.cnn = self.create_cnn(cnn_input_shape)
@@ -14,11 +17,11 @@ class A3CModel(Model):
         self.action_space = action_space
 
         # Create actor critic
-        # TODO
-        self.actor_dense = Dense(action_space, activation='softmax')
-        self.critic_dense = Dense(1)
+        self.common_dense = Dense(self.COMMON_LAYER_UNITS, activation=self.COMMON_LAYER_ACTIVATION)
+        self.actor_out = Dense(action_space, activation='softmax')
+        self.critic_out = Dense(1)
 
-    def call(self, inputs):
+    def call(self, inputs: tuple):
         cnn_input, dnn_input = inputs
 
         # Inputs goes thru both nn
@@ -26,16 +29,16 @@ class A3CModel(Model):
         dnn_output = self.dnn(dnn_input)
 
         combined_output = Concatenate()([cnn_output, dnn_output])
+        common_output = self.common_dense(combined_output)
 
-        # Actor & critic
-        # TODO
-        actor_output = self.actor_dense(combined_output)
-        critic_output = self.critic_dense(combined_output)
+        # Actor & critic output
+        actor_output = self.actor_out(common_output)
+        critic_output = self.critic_out(common_output)
 
         return actor_output, critic_output
 
     def create_cnn(self, input_shape):
-        # TODO
+        # TODO need to do some experiments (MaxPool ?)
         inputs = Input(shape=input_shape)
         x = Conv2D(32, (3, 3), activation='relu')(inputs)
         x = Conv2D(64, (3, 3), activation='relu')(x)
@@ -43,8 +46,7 @@ class A3CModel(Model):
         return Model(inputs, x, name='cnn_submodel')
 
     def create_dnn(self, input_shape):
-        # TODO
         inputs = Input(shape=(input_shape,))
-        x = Dense(64, activation='relu')(inputs)
-        x = Dense(64, activation='relu')(x)
+        x = Dense(512, activation='relu')(inputs)
+        x = Dense(512, activation='relu')(x)
         return Model(inputs, x, name='dnn_submodel')

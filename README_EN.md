@@ -38,9 +38,9 @@ The project consists of three main parts:
 - Iterative optimization: This process will require many training iterations, where based on the results of one network, the other will adjust its actions. Manual adjustment of the weight of individual components of the cost function may be necessary to find the optimal balance.
 
 ## Technologies
-- Python 3.11
-- Pygame - for game implementation
-- TensorFlow - for implementing neural networks
+- Python 3.10
+- Pygame 2.5
+- TensorFlow 2.10
 
 ## Installation
 Instructions for installing the necessary tools and libraries.
