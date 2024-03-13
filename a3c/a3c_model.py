@@ -22,7 +22,7 @@ class A3CModel(Model):
         self.critic_out = Dense(1)
 
     def call(self, inputs: tuple):
-        cnn_input, dnn_input = inputs
+        cnn_input, dnn_input = inputs  # states
 
         # Inputs goes thru both nn
         cnn_output = self.cnn(cnn_input)
