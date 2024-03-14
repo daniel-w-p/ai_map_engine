@@ -1,25 +1,29 @@
 # The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
 # This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, Concatenate
 
 
 class A3CModel(Model):
+    LEARNING_RATE = 0.001
     COMMON_LAYER_UNITS = 512
     COMMON_LAYER_ACTIVATION = 'relu'  # TODO later check tanh
 
-    def __init__(self, cnn_input_shape, dnn_input_shape, action_space):
+    def __init__(self, cnn_input_shape, dnn_input_shape, action_space_size):
         super(A3CModel, self).__init__()
         self.cnn = self.create_cnn(cnn_input_shape)
         self.dnn = self.create_dnn(dnn_input_shape)
-        self.action_space = action_space
+        self.action_space_size = action_space_size
 
-        # Create actor critic
+        # Create actor critic common and output layers
         self.common_dense = Dense(self.COMMON_LAYER_UNITS, activation=self.COMMON_LAYER_ACTIVATION)
-        self.actor_out = Dense(action_space, activation='softmax')
+        self.actor_out = Dense(action_space_size, activation='softmax')
         self.critic_out = Dense(1)
+
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.LEARNING_RATE)
 
     def call(self, inputs: tuple):
         cnn_input, dnn_input = inputs  # states
@@ -31,13 +35,42 @@ class A3CModel(Model):
         combined_output = Concatenate()([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
 
-        # Actor & critic output
+        # Actor & critic output - Policy & Value
         actor_output = self.actor_out(common_output)
         critic_output = self.critic_out(common_output)
 
         return actor_output, critic_output
 
-    def create_cnn(self, input_shape):
+    def actor_loss(self, advantages, actions, action_probs):
+        action_probs = tf.clip_by_value(action_probs, 1e-8, 1 - 1e-8)  # 1e-8 - to prevent log(0) error
+        log_probs = tf.math.log(action_probs)
+        selected_log_probs = tf.reduce_sum(log_probs * actions, axis=1, keepdims=True)
+        loss = -tf.reduce_mean(selected_log_probs * advantages)
+        return loss
+
+    def critic_loss(self, estimated_values, true_values):
+        return tf.keras.losses.mean_squared_error(true_values, estimated_values)
+
+    @tf.function
+    def train_step(self, model, state, action, next_state, reward, done, gamma=0.99):
+        with tf.GradientTape() as tape:
+            action_probs, value = model([state, np.zeros((1,)), np.zeros((self.action_space_size,))], training=True)
+            _, next_value = model([next_state, np.zeros((1,)), np.zeros((self.action_space_size,))], training=True)
+
+            target_value = reward + (1 - done) * gamma * next_value
+            advantage = target_value - value
+
+            a_loss = self.actor_loss(advantage, action, action_probs)
+            c_loss = self.critic_loss(value, target_value)
+            total_loss = a_loss + c_loss
+
+        grads = tape.gradient(total_loss, model.trainable_variables)
+        self.optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
+        return total_loss
+
+    @staticmethod
+    def create_cnn(input_shape):
         # TODO need to do some experiments (MaxPool ?)
         inputs = Input(shape=input_shape)
         x = Conv2D(32, (3, 3), activation='relu')(inputs)
@@ -45,7 +78,8 @@ class A3CModel(Model):
         x = Flatten()(x)
         return Model(inputs, x, name='cnn_submodel')
 
-    def create_dnn(self, input_shape):
+    @staticmethod
+    def create_dnn(input_shape):
         inputs = Input(shape=(input_shape,))
         x = Dense(512, activation='relu')(inputs)
         x = Dense(512, activation='relu')(x)

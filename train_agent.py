@@ -10,19 +10,19 @@ def main():
     action_space = 6  # LEFT_DOWN, LEFT_UP, RIGHT_DOWN, RIGHT_UP, JUMP_DOWN, JUMP_UP
     num_agents = 16
 
-    model = A3CModel(env_state_shape, plr_state_shape, action_space)
-    agent = Agent(env_state_shape, plr_state_shape, action_space)
+    main_model = Agent(env_state_shape, plr_state_shape, action_space)
     weights_queue = mp.Queue()
     experience_queue = mp.Queue()
 
     # Agents initialization
     agents = []
     for i in range(num_agents):
-        weights_queue.put(model.get_weights())
-        agent = mp.Process(target=agent.learn(),
-                           args=(i, weights_queue, experience_queue))
-        agents.append(agent)
-        agent.start()
+        weights_queue.put(main_model.model.get_weights())
+        agent = Agent(env_state_shape, plr_state_shape, action_space)
+        agent_process = mp.Process(target=agent.learn,
+                                   args=(i, weights_queue, experience_queue))
+        agents.append(agent_process)
+        agent_process.start()
 
     # Collect data
     experiences = []
@@ -30,7 +30,7 @@ def main():
         data = experience_queue.get()  # Block until data available
         experiences.append(data)
 
-        if len(experiences) == model.EXP_COUNTER * num_agents:
+        if len(experiences) == main_model.EXP_COUNTER * num_agents:
             break  # when collect all
 
     # TODO Model actualization
