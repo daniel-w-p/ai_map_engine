@@ -7,7 +7,7 @@ from a3c import A3CModel, Agent
 def main():
     env_state_shape = (40, 30)
     plr_state_shape = (5,)  # position_x, position_y, velocity, jump_velocity, direction
-    action_space = 6  # LEFT_DOWN, LEFT_UP, RIGHT_DOWN, RIGHT_UP, JUMP_DOWN, JUMP_UP
+    action_space = 5  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
     num_agents = 16
 
     main_model = Agent(env_state_shape, plr_state_shape, action_space)

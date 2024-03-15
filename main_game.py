@@ -1,6 +1,5 @@
 import pygame
 from new_game import consts
-from new_game import GameBackground
 from new_game import GameCrl
 
 

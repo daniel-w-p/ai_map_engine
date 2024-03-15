@@ -10,16 +10,18 @@ from enum import Enum
 class GameAction(Enum):
     QUIT = -2
     PAUSE = -1
-    NO_MOVE = 0
-    RUN_LEFT = 1
-    RUN_RIGHT = 2
-    JUMP = 3
+    NO_ACTION = 0
+    STOP_MOVE = 1
+    RUN_LEFT = 2
+    RUN_RIGHT = 3
+    JUMP = 4
 
 
 class AbstractGameControl:
     def __init__(self):
         self._background = GameBackground()  # not related with map
         self._game = Game(self._background)
+        self._action = GameAction.NO_ACTION
 
     @property
     def game(self):
@@ -29,8 +31,8 @@ class AbstractGameControl:
     def back(self):
         return self._background
 
-    def get_action_from_ai(self):
-        return 0
+    def action_from_ai(self, action):
+        self._action = action
 
     def execute_action(self, api_action):
         if api_action == GameAction.QUIT.value:
@@ -42,7 +44,7 @@ class AbstractGameControl:
             self._game.player_left()
         if api_action == GameAction.RUN_RIGHT.value:
             self._game.player_right()
-        if api_action == GameAction.NO_MOVE.value:
+        if api_action == GameAction.STOP_MOVE.value:
             self._game.player_retard()
         if api_action == GameAction.PAUSE.value:
             self._game.pause_game()
@@ -82,15 +84,14 @@ class AbstractGameControl:
                         self._game.pause_game()
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a or event.key == pygame.K_d:
-                    self.game_action_normal(GameAction.NO_MOVE.value)
+                    self.game_action_normal(GameAction.STOP_MOVE.value)
 
             self._game.game_events(event)
         if self._game.is_game_running():
             self._game.game_step()
 
     def api_loop_body(self):
-        action = self.get_action_from_ai()
-        state, reward, done = self.game_action_api(action)
+        state, reward, done = self.game_action_api(self._action)
 
         if GAME_MODE == GameMode.API_PLAY:
             for event in pygame.event.get():

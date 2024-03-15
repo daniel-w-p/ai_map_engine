@@ -19,6 +19,9 @@ class Agent:
     def load_model(self):
         self.model.load_weights(self.SAVE_DIR)
 
+    def choose_action(self):
+        pass
+
     def learn(self, agent_id, model_weights_queue, experience_queue):
         # Set weights as in main model
         self.model.set_weights(model_weights_queue.get())

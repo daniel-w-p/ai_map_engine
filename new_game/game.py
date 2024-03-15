@@ -260,6 +260,7 @@ class Game:
     def calculate_reward(self):
         scale_distance_param = 0.2
         scale_time_param = 0.002
+        self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
         return self._score + scale_distance_param * self._distance - scale_time_param * play_time
