@@ -12,10 +12,10 @@ class Environment:
         self.game_control = GameCrl()
 
     def step(self, action):
-        state, reward, done = self.game_control.game_action_api(action)
+        e_state, p_state, reward, done = self.game_control.game_action_api(action)
         self.game_control.game.game_step()
         pygame.display.update()
-        return state, reward, done
+        return e_state, p_state, reward, done
 
     def reset(self):
         self.game_control.game.reset_game()

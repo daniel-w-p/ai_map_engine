@@ -1,9 +1,10 @@
 import pygame.time
+import numpy as np
 from enum import Enum
 
 from new_game.map_decoder import MapDecoder, GameParticles
 from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
-from .consts import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, TimeEvents
+from .consts import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, TimeEvents
 from .game_background import GameBackground
 
 
@@ -252,7 +253,23 @@ class Game:
             self._game_background.set_game_time_text(str(play_time // 1000))
 
     def update_environment_state(self):
-        pass
+        mini_width = SCREEN_WIDTH // MINIMAP_ONE_PIXEL
+        mini_height = SCREEN_HEIGHT // MINIMAP_ONE_PIXEL
+
+        mini_map = np.zeros((mini_width, mini_height))
+
+        for i in range(mini_height):
+            for j in range(mini_width):
+                for e in self._environs:
+                    if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
+                        mini_map[j, i] = 0.5
+                for e in self._obstacles:
+                    if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
+                        mini_map[j, i] = 0.1
+                for e in self._rewards:
+                    if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
+                        mini_map[j, i] = 1  # TODO check if same value for all rewards is not wrong
+        self._environment_state = mini_map
 
     def add_reward(self, reward: float):
         self._score += reward
@@ -272,7 +289,7 @@ class Game:
     @property
     def environment_state(self):
         self.update_environment_state()
-        return self._environment_state
+        return self._environment_state, self._player.player_state
 
     @property
     def reward(self):

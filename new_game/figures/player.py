@@ -72,6 +72,10 @@ class Player(Sprite):
     def animated_move(self):
         return self._scroll_value > 0
 
+    @property
+    def player_state(self):
+        return self.rect.x, self.rect.y, self._velocity, self._jump_v, self._right_direction
+
     def live_reset(self):
         self._life = self.MAX_LIFE
 

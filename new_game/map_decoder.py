@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from enum import Enum
+from .consts import MINIMAP_ONE_PIXEL
 
 
 class GameParticles(Enum):
@@ -36,7 +37,7 @@ class MapDecoder:
         self._img = Image.open("new_game/media/images/map.png")
         self._img_width, self.img_height = self._img.size
         self._img_array = np.array(self._img)
-        self._one_pixel = 25
+        self._one_pixel = MINIMAP_ONE_PIXEL
         self._elements_dict = {}  # key: position (in game)  value: environment particle
 
     def prepare_map(self):

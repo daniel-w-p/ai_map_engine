@@ -54,13 +54,13 @@ class AbstractGameControl:
         # Make actions
         self.execute_action(action)
 
-        state = self._game.game_state
+        env_state, plr_state = self._game.environment_state
 
         reward = self._game.reward
 
         done = self._game.is_game_over
 
-        return state, reward, done
+        return env_state, plr_state, reward, done
 
     def game_action_normal(self, action):
         # Make actions
