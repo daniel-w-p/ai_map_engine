@@ -8,9 +8,6 @@ class Agent:
     SAVE_DIR = './saves/a3c_model'
 
     def __init__(self, env_state_shape, player_state_shape, action_space):
-        # self.env_state_shape = env_state_shape
-        # self.player_state_shape = player_state_shape
-        # self.action_space = action_space
         self.model = A3CModel(env_state_shape, player_state_shape, action_space)
 
     def save_model(self):
@@ -19,19 +16,35 @@ class Agent:
     def load_model(self):
         self.model.load_weights(self.SAVE_DIR)
 
-    def choose_action(self):
-        pass
+    def choose_action(self, states):
+        env_state, plr_state = states
+        state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
+        state_plr_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
+        action_probs, _ = self.model((state_env_tensor, state_plr_tensor))
+        action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
+        return action.numpy()
 
-    def learn(self, agent_id, model_weights_queue, experience_queue):
-        # Set weights as in main model
+    def learn(self, agent_id, model_weights_queue, experience_queue, env, gamma=0.99):
         self.model.set_weights(model_weights_queue.get())
 
-        # Simulation
-        # TODO first need to work on environment 
-        for _ in range(self.EXP_COUNTER):
-            # TODO State and predict
+        for episode in range(self.EXP_COUNTER):
+            done = False
+            states = env.reset()
+            env_state, plr_state = states
+            while not done:
+                action = self.choose_action(states)
+                next_env_state, next_plr_state, reward, done = env.step(action)
+                value, _ = self.model((tf.convert_to_tensor([env_state], dtype=tf.float32), tf.convert_to_tensor([plr_state], dtype=tf.float32)))
+                next_value, _ = self.model((tf.convert_to_tensor([next_env_state], dtype=tf.float32), tf.convert_to_tensor([next_plr_state], dtype=tf.float32)))
 
-            # TODO Interaction and experience
+                if done:
+                    reward = -1  # end game punishment
 
-            # TODO Collect experience
-            experience_queue.put(agent_id)  # data (id, state, action, value))
+                target_value = reward + (1 - done) * gamma * next_value
+                advantage = target_value - value
+
+                experience = (states, action, advantage.numpy(), reward)
+                experience_queue.put((agent_id, experience))
+
+                states = (next_env_state, next_plr_state)
+

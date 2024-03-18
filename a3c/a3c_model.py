@@ -52,10 +52,10 @@ class A3CModel(Model):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
     @tf.function
-    def train_step(self, model, state, action, next_state, reward, done, gamma=0.99):
+    def train_step(self, model, states, action, next_states, reward, done, gamma=0.99):
         with tf.GradientTape() as tape:
-            action_probs, value = model([state, np.zeros((1,)), np.zeros((self.action_space_size,))], training=True)
-            _, next_value = model([next_state, np.zeros((1,)), np.zeros((self.action_space_size,))], training=True)
+            action_probs, value = model(states, training=True)
+            _, next_value = model(next_states, training=True)
 
             target_value = reward + (1 - done) * gamma * next_value
             advantage = target_value - value
@@ -65,6 +65,7 @@ class A3CModel(Model):
             total_loss = a_loss + c_loss
 
         grads = tape.gradient(total_loss, model.trainable_variables)
+        grads, _ = tf.clip_by_global_norm(grads, clip_norm=1.0)
         self.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
         return total_loss

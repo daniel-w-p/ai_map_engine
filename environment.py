@@ -4,19 +4,46 @@ from new_game import GameCrl
 
 
 class Environment:
-    def __init__(self):
-        pygame.init()
-        pygame.display.set_caption(consts.GAME_TITLE)
+    """
+    The Environment class serves as an abstraction layer for interacting with the game using Pygame.
+    It provides methods for initializing the game environment, performing actions in the game, and resetting the game state.
 
-        self.screen = pygame.display.set_mode((consts.SCREEN_WIDTH, consts.SCREEN_HEIGHT))
-        self.game_control = GameCrl()
+    Attributes:
+        game_control (GameCrl): Game controller that manages the logic and state of the game.
+    """
+
+    def __init__(self):
+        """
+        Initializes the game environment.
+        """
+        try:
+            pygame.init()
+            pygame.display.set_caption(consts.GAME_TITLE)
+            self.game_control = GameCrl()
+        except Exception as e:
+            print(e)
 
     def step(self, action):
+        """
+        Executes an action in the game environment and returns the result.
+
+        Args:
+            action: Action to be performed in the game (defined by the model).
+
+        Returns:
+            tuple: A tuple containing the state of the environment after performing the action, the state of the player,
+                   the reward for the performed action, and a flag indicating whether the game has ended.
+        """
         e_state, p_state, reward, done = self.game_control.game_action_api(action)
         self.game_control.game.game_step()
-        pygame.display.update()
         return e_state, p_state, reward, done
 
     def reset(self):
+        """
+        Resets the game state to its initial state.
+
+        Returns:
+            Object: The initial state of the game after the reset.
+        """
         self.game_control.game.reset_game()
-        return self.game_control.game.game_state
+        return self.game_control.game.environment_state

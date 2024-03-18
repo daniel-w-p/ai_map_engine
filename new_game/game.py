@@ -262,13 +262,13 @@ class Game:
             for j in range(mini_width):
                 for e in self._environs:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 0.5
+                        mini_map[j, i] = 0.0
                 for e in self._obstacles:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 0.1
+                        mini_map[j, i] = - 1.0
                 for e in self._rewards:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 1  # TODO check if same value for all rewards is not wrong
+                        mini_map[j, i] = 1.0  # TODO check if same value for all rewards is not wrong
         self._environment_state = mini_map
 
     def add_reward(self, reward: float):

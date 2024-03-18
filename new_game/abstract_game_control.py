@@ -48,7 +48,6 @@ class AbstractGameControl:
             self._game.player_retard()
         if api_action == GameAction.PAUSE.value:
             self._game.pause_game()
-        # TODO MORE ACTION
 
     def game_action_api(self, action):
         # Make actions
@@ -91,7 +90,8 @@ class AbstractGameControl:
             self._game.game_step()
 
     def api_loop_body(self):
-        state, reward, done = self.game_action_api(self._action)
+        # TODO (not finish) needed when model play
+        e_state, p_state, reward, done = self.game_action_api(self._action)
 
         if GAME_MODE == GameMode.API_PLAY:
             for event in pygame.event.get():
