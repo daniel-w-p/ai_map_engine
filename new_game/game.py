@@ -269,7 +269,7 @@ class Game:
                 for e in self._rewards:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
                         mini_map[j, i] = 1.0  # TODO check if same value for all rewards is not wrong
-        self._environment_state = mini_map
+        self._environment_state = mini_map.reshape(mini_width, mini_height, 1)
 
     def add_reward(self, reward: float):
         self._score += reward

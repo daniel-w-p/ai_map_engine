@@ -18,7 +18,6 @@ class Environment:
         """
         try:
             pygame.init()
-            pygame.display.set_caption(consts.GAME_TITLE)
             self.game_control = GameCrl()
         except Exception as e:
             print(e)
