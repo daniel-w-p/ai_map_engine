@@ -5,7 +5,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 50  # how many experiences (game from start to end)
+    EXP_COUNTER = 2  # how many experiences (game from start to end)
     SAVE_DIR = './saves/a3c_model'
 
     def __init__(self, env_state_shape, player_state_shape, action_space):
@@ -28,8 +28,9 @@ class Agent:
 
     def learn(self, agent_id, model_weights_queue, experience_queue, gamma=0.99):
         self.model.set_weights(model_weights_queue.get())
-
+        print("Agent ", agent_id, " is running")
         for episode in range(self.EXP_COUNTER):
+            print("episode ", episode, " start")
             done = False
             states = self.env.reset()
             env_state, plr_state = states
@@ -40,7 +41,7 @@ class Agent:
                 next_value, _ = self.model((tf.convert_to_tensor([next_env_state], dtype=tf.float32), tf.convert_to_tensor([next_plr_state], dtype=tf.float32)))
 
                 if done:
-                    reward = -1  # end game punishment
+                    reward -= 10  # end game punishment
 
                 target_value = reward + (1 - done) * gamma * next_value
                 advantage = target_value - value

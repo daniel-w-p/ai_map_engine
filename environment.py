@@ -1,5 +1,5 @@
 import pygame
-from new_game import consts
+from new_game import config
 from new_game import GameCrl
 
 
@@ -17,10 +17,9 @@ class Environment:
         Initializes the game environment.
         """
         try:
-            pygame.init()
             self.game_control = GameCrl()
         except Exception as e:
-            print(e)
+            print("Game initializing error: " + str(e))
 
     def step(self, action):
         """

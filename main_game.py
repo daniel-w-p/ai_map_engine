@@ -1,19 +1,19 @@
 import pygame
-from new_game import consts
+from new_game import config
 from new_game import GameCrl
 
 
 def run_game():
     pygame.init()
-    screen = pygame.display.set_mode((consts.SCREEN_WIDTH, consts.SCREEN_HEIGHT))
-    pygame.display.set_caption(consts.GAME_TITLE)
+    screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+    pygame.display.set_caption(config.GAME_TITLE)
     clock = pygame.time.Clock()
 
     game_control = GameCrl()
     background = game_control.back
 
     while True:
-        if consts.GAME_MODE == consts.GameMode.NORMAL.value:
+        if config.GAME_MODE == config.GameMode.NORMAL.value:
             # count all
             game_control.normal_loop_body()
             # draw all
@@ -24,7 +24,7 @@ def run_game():
             else:
                 background.draw_intro(screen)
             # control environ
-            clock.tick(consts.FRAME_RATE)
+            clock.tick(config.FRAME_RATE)
         else:
             game_control.api_loop_body()
 

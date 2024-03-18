@@ -3,7 +3,7 @@ import math
 from pygame.sprite import Sprite
 from enum import Enum
 
-from ..consts import SCREEN_SIDE_MARGIN
+from ..config import SCREEN_SIDE_MARGIN
 
 
 class ObstaclesDamage(Enum):
@@ -22,7 +22,6 @@ class Player(Sprite):
         super().__init__()
 
         self._image_move = pygame.image.load("new_game/media/images/figure.png").convert_alpha()
-        # self._image_jump = pygame.image.load("new_game/media/images/jumpP.png").convert_alpha()
 
         self._scroll_value = 0
         self._scroll_right = True

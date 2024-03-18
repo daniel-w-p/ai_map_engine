@@ -1,7 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
-from ..consts import SCREEN_WIDTH
+from ..config import SCREEN_WIDTH
 from .a_particles import Particles
 
 

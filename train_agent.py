@@ -1,11 +1,12 @@
 import multiprocessing as mp
 import os
 import queue
+import pygame
 
 import tensorflow as tf
 
 from a3c import Agent
-from new_game.consts import SCREEN_WIDTH, SCREEN_HEIGHT, MINIMAP_ONE_PIXEL
+from new_game import config
 
 
 def update_model(experiences, model):
@@ -14,7 +15,7 @@ def update_model(experiences, model):
 
     Args:
     experiences (list): A list of experiences collected by agents. Each experience is a tuple
-    (state, action, advantage, reward).
+    (states, action, advantage, reward).
     model (A3CModel): An instance of the A3C model that will be updated.
     """
     # Prepare data
@@ -48,7 +49,7 @@ def update_model(experiences, model):
 
 
 def main():
-    env_state_shape = (SCREEN_WIDTH // MINIMAP_ONE_PIXEL, SCREEN_HEIGHT // MINIMAP_ONE_PIXEL, 1)
+    env_state_shape = (config.SCREEN_WIDTH // config.MINIMAP_ONE_PIXEL, config.SCREEN_HEIGHT // config.MINIMAP_ONE_PIXEL, 1)
     plr_state_shape = 5  # position_x, position_y, velocity, jump_velocity, direction
     action_space = 5  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
     num_agents = 16
@@ -56,6 +57,9 @@ def main():
     main_model = Agent(env_state_shape, plr_state_shape, action_space)
     weights_queue = mp.Queue()
     experience_queue = mp.Queue()
+
+    weights_queue.put(main_model.model.get_weights())
+    main_model.learn(0, weights_queue, experience_queue)
 
     print("Creating Agents")
     agents = []
@@ -74,9 +78,9 @@ def main():
             data = experience_queue.get_nowait()
             experiences.append(data)
         except queue.Empty:
-            print("Kolejka jest pusta")
+            print("Empty queue")
         except EOFError:
-            print("Błąd EOF przy próbie odczytu z kolejki")
+            print("Queue read error")
 
         if len(experiences) == main_model.EXP_COUNTER * num_agents:
             break  # when collect all
@@ -93,6 +97,14 @@ def main():
 
 
 if __name__ == "__main__":
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
     print("This module is not fully implemented yet")
-    main()
+    try:
+        pygame.init()
+        pygame.display.set_mode((1, 1), pygame.NOFRAME)
+        main()
+    except Exception as e:
+        print("An error occured " + str(e))
+    finally:
+        pygame.quit()
+
+    print("Done!")

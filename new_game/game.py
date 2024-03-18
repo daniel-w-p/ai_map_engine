@@ -4,7 +4,7 @@ from enum import Enum
 
 from new_game.map_decoder import MapDecoder, GameParticles
 from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
-from .consts import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, TimeEvents
+from .config import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, GAME_MODE, GameMode, TimeEvents
 from .game_background import GameBackground
 
 
@@ -22,7 +22,10 @@ class RewardPoints(Enum):
 
 
 class Game:
-    def __init__(self, background: GameBackground):
+    def __init__(self, background: GameBackground = None):
+        if GAME_MODE == GameMode.API_LEARN.value:
+            print("Render is off")
+
         self._player = Player()
         self._obstacles = pygame.sprite.Group()
         self._environs = pygame.sprite.Group()
@@ -68,7 +71,8 @@ class Game:
         self.set_map_init_content()
 
         self._play_time_start = pygame.time.get_ticks()
-        self._game_background.set_player_life_text(str(self._player.life))
+        if self._game_background is not None:
+            self._game_background.set_player_life_text(str(self._player.life))
 
     def set_map_part(self, width, height, kind):
         if kind.value < 3:
@@ -141,10 +145,11 @@ class Game:
         self.set_map_init_content()
 
     def draw_stage(self, screen):
-        self._environs.draw(screen)
-        self._rewards.draw(screen)
-        self._obstacles.draw(screen)
-        self._player.draw(screen)
+        if GAME_MODE != GameMode.API_LEARN.value:  # TODO ?? move from here to drawing ??
+            self._environs.draw(screen)
+            self._rewards.draw(screen)
+            self._obstacles.draw(screen)
+            self._player.draw(screen)
 
     def player_collisions(self):
         collisions_env = pygame.sprite.spritecollide(self._player, self._environs, False)
@@ -159,7 +164,8 @@ class Game:
         if collisions_hurt:
             for hurt in collisions_hurt:
                 self._player.hurt(isinstance(hurt, Fire))
-                self._game_background.set_player_life_text(str(self._player.life))
+                if self._game_background is not None:
+                    self._game_background.set_player_life_text(str(self._player.life))
 
         if collisions_rew:
             for reward in collisions_rew:
@@ -173,12 +179,14 @@ class Game:
                     self.add_reward(100)
                     self._game_state = GameState.FINISH.value
 
-            self._game_background.set_game_score_text(str(self._score))
+            if self._game_background is not None:
+                self._game_background.set_game_score_text(str(self._score))
 
     def player_movement(self):
         if self._player.rect.y > SCREEN_HEIGHT:
             self._player.fall_out()
-            self._game_background.set_player_life_text(str(self._player.life))
+            if self._game_background is not None:
+                self._game_background.set_player_life_text(str(self._player.life))
 
         if self._player.rect.x > SCREEN_WIDTH * 0.75 and self._actual_right < self._map_decoder.map_real_width and self._scroll_right is None:
             self._scroll_right = True
@@ -250,7 +258,8 @@ class Game:
 
         if event.type == self.elapsed_event:
             play_time = pygame.time.get_ticks() - self._play_time_start
-            self._game_background.set_game_time_text(str(play_time // 1000))
+            if self._game_background is not None:
+                self._game_background.set_game_time_text(str(play_time // 1000))
 
     def update_environment_state(self):
         mini_width = SCREEN_WIDTH // MINIMAP_ONE_PIXEL
@@ -283,8 +292,9 @@ class Game:
         return self._score + scale_distance_param * self._distance - scale_time_param * play_time
 
     @property
-    def game_state(self):
-        return self._game_state
+    def game_state(self) -> bool:  # check if game should be finish
+        play_time = pygame.time.get_ticks() - self._play_time_start
+        return self.is_game_over() or play_time > 10000
 
     @property
     def environment_state(self):

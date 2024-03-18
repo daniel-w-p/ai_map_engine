@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 from enum import Enum
-from .consts import MINIMAP_ONE_PIXEL
+from .config import MINIMAP_ONE_PIXEL
 
 
 class GameParticles(Enum):

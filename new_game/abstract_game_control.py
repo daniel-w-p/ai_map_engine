@@ -1,7 +1,7 @@
 import pygame
 from sys import exit
 from .game import Game
-from .consts import GAME_MODE, GameMode
+from .config import GAME_MODE, GameMode
 from .game_background import GameBackground
 
 from enum import Enum
@@ -19,7 +19,10 @@ class GameAction(Enum):
 
 class AbstractGameControl:
     def __init__(self):
-        self._background = GameBackground()  # not related with map
+        if GAME_MODE != GameMode.API_LEARN.value:
+            self._background = GameBackground()  # background not related with map
+        else:
+            self._background = None
         self._game = Game(self._background)
         self._action = GameAction.NO_ACTION
 
@@ -57,7 +60,7 @@ class AbstractGameControl:
 
         reward = self._game.reward
 
-        done = self._game.is_game_over
+        done = self._game.game_state
 
         return env_state, plr_state, reward, done
 

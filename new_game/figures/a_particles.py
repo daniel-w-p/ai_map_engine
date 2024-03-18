@@ -1,7 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
-from ..consts import SCREEN_SIDE_MARGIN
+from ..config import SCREEN_SIDE_MARGIN
 
 
 class Particles(Sprite):
