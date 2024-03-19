@@ -1,12 +1,13 @@
 import multiprocessing as mp
-import os
 import queue
+
 import pygame
 
 import tensorflow as tf
 
-from a3c import Agent
+from a3c import Agent, A3CModel
 from new_game import config
+from environment import Environment
 
 
 def update_model(experiences, model):
@@ -19,10 +20,9 @@ def update_model(experiences, model):
     model (A3CModel): An instance of the A3C model that will be updated.
     """
     # Prepare data
-    states, actions, advantages, rewards = zip(*experiences)
-    env_state, plr_state = zip(*states)
-    state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
-    state_plr_tensor = tf.convert_to_tensor([plr_state], dtype=tf.float32)
+    env_state, plr_state, actions, advantages, rewards = zip(*experiences)
+    state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
+    state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
     actions = tf.convert_to_tensor(actions, dtype=tf.int32)
     advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
     rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
@@ -35,7 +35,8 @@ def update_model(experiences, model):
         # actor loss
         action_log_probs = tf.math.log(action_probs)
         action_indices = tf.range(0, tf.shape(action_log_probs)[0]) * tf.shape(action_log_probs)[1] + actions
-        selected_action_log_probs = tf.gather(tf.reshape(action_log_probs, [-1]), action_indices)
+        selected_action_log_probs = tf.gather(action_log_probs, action_indices)
+        advantages = tf.squeeze(advantages, axis=1)
         actor_loss = -tf.reduce_mean(selected_action_log_probs * advantages)
 
         # critic loss
@@ -52,22 +53,21 @@ def main():
     env_state_shape = (config.SCREEN_WIDTH // config.MINIMAP_ONE_PIXEL, config.SCREEN_HEIGHT // config.MINIMAP_ONE_PIXEL, 1)
     plr_state_shape = 5  # position_x, position_y, velocity, jump_velocity, direction
     action_space = 5  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
-    num_agents = 16
+    num_agents = 3
 
-    main_model = Agent(env_state_shape, plr_state_shape, action_space)
-    weights_queue = mp.Queue()
-    experience_queue = mp.Queue()
-
-    weights_queue.put(main_model.model.get_weights())
-    main_model.learn(0, weights_queue, experience_queue)
+    main_model = A3CModel(env_state_shape, plr_state_shape, action_space)
+    manager = mp.Manager()
+    weights_queue = manager.Queue()
+    experience_queue = manager.Queue()
 
     print("Creating Agents")
     agents = []
     for i in range(num_agents):
-        weights_queue.put(main_model.model.get_weights())
+        weights_queue.put(main_model.get_weights())
+        print("Creating Agent ", i)
         agent = Agent(env_state_shape, plr_state_shape, action_space)
-        agent_process = mp.Process(target=agent.learn,
-                                   args=(i, weights_queue, experience_queue))
+        agent_process = mp.Process(target=Agent.learn,
+                                   args=(i, agent.shapes, weights_queue, experience_queue))
         agents.append(agent_process)
         agent_process.start()
 
@@ -75,36 +75,32 @@ def main():
     experiences = []
     while True:
         try:
-            data = experience_queue.get_nowait()
+            data = experience_queue.get(timeout=60)
             experiences.append(data)
         except queue.Empty:
             print("Empty queue")
         except EOFError:
             print("Queue read error")
 
-        if len(experiences) == main_model.EXP_COUNTER * num_agents:
+        if len(experiences) == Agent.EXP_COUNTER * num_agents:
             break  # when collect all
-
-        new_weights = main_model.model.get_weights()
-        for _ in range(num_agents):
-            weights_queue.put(new_weights)
 
     # Fin
     for agent in agents:
         agent.join()
 
-    update_model(experiences, main_model.model)
+    update_model(experiences, main_model)
 
 
 if __name__ == "__main__":
     print("This module is not fully implemented yet")
-    try:
-        pygame.init()
-        pygame.display.set_mode((1, 1), pygame.NOFRAME)
-        main()
-    except Exception as e:
-        print("An error occured " + str(e))
-    finally:
-        pygame.quit()
+    mp.set_start_method('spawn')
+
+    pygame.init()
+    pygame.display.set_mode((1, 1), pygame.NOFRAME)
+
+    main()
+
+    pygame.quit()
 
     print("Done!")
