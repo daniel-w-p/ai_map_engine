@@ -5,7 +5,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 2  # how many experiences (game from start to end)
+    EXP_COUNTER = 20  # how many experiences (game from start to end)
     SAVE_DIR = './saves/a3c_model'
 
     def __init__(self, env_state_shape, player_state_shape, action_space):
@@ -18,11 +18,11 @@ class Agent:
         return self.env_state_shape, self.player_state_shape, self.action_space
 
     @staticmethod
-    def save_model(model, save_dir):
+    def save_model(model, save_dir=SAVE_DIR):
         model.save_weights(save_dir)
 
     @staticmethod
-    def load_model(model, save_dir):
+    def load_model(model, save_dir=SAVE_DIR):
         model.load_weights(save_dir)
 
     @staticmethod
@@ -63,4 +63,6 @@ class Agent:
                 experience_queue.put(experience)  # ((agent_id, experience))
 
                 states = (next_env_state, next_plr_state)
+
+        tf.keras.backend.clear_session()
 

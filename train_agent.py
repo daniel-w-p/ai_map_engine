@@ -53,17 +53,32 @@ def main():
     env_state_shape = (config.SCREEN_WIDTH // config.MINIMAP_ONE_PIXEL, config.SCREEN_HEIGHT // config.MINIMAP_ONE_PIXEL, 1)
     plr_state_shape = 5  # position_x, position_y, velocity, jump_velocity, direction
     action_space = 5  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
-    num_agents = 3
+    num_agents = 8
+    start_from_checkpoint = True
+
+    # Dynamic GPU memory allocation for TensorFlow
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(e)
 
     main_model = A3CModel(env_state_shape, plr_state_shape, action_space)
+    if start_from_checkpoint:
+        print("Loading checkpoint...")
+        main_model.load_weights(Agent.SAVE_DIR)
+
     manager = mp.Manager()
     weights_queue = manager.Queue()
     experience_queue = manager.Queue()
 
     print("Creating Agents")
     agents = []
+    main_model_weights = main_model.get_weights()
     for i in range(num_agents):
-        weights_queue.put(main_model.get_weights())
+        weights_queue.put(main_model_weights)
         print("Creating Agent ", i)
         agent = Agent(env_state_shape, plr_state_shape, action_space)
         agent_process = mp.Process(target=Agent.learn,
@@ -90,6 +105,7 @@ def main():
         agent.join()
 
     update_model(experiences, main_model)
+    main_model.save_weights(Agent.SAVE_DIR)
 
 
 if __name__ == "__main__":

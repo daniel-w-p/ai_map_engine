@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, Concatenate
 
 class A3CModel(Model):
     LEARNING_RATE = 0.001
-    COMMON_LAYER_UNITS = 512
+    COMMON_LAYER_UNITS = 32
     COMMON_LAYER_ACTIVATION = 'relu'  # TODO later check tanh
 
     def __init__(self, cnn_input_shape, dnn_input_shape, action_space_size):
@@ -82,6 +82,6 @@ class A3CModel(Model):
     @staticmethod
     def create_dnn(input_shape):
         inputs = Input(shape=(input_shape,))
-        x = Dense(512, activation='relu')(inputs)
-        x = Dense(512, activation='relu')(x)
+        x = Dense(128, activation='relu')(inputs)
+        x = Dense(64, activation='relu')(x)
         return Model(inputs, x, name='dnn_submodel')
