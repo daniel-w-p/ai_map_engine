@@ -1,6 +1,7 @@
 import pygame
-from new_game import config
-from new_game import GameCrl
+from new_game import config, GameCrl, Game
+from new_game.figures import Player
+from a3c import A3CModel, Agent
 
 
 def run_game():
@@ -11,22 +12,38 @@ def run_game():
 
     game_control = GameCrl()
     background = game_control.back
+    # only for AI
+    model = None
+    play_from_checkpoint = True
+    e_state, p_state, reward, done = None, None, None, False
+
+    if config.GAME_MODE == config.GameMode.API_PLAY.value:
+        print("Start game in AI mode (model control)")
+        env_state_shape = Game.env_state_size()
+        plr_state_shape = Player.plr_state_size()
+        action_space = GameCrl.action_space_size()
+        model = A3CModel(env_state_shape, plr_state_shape, action_space)
+        if play_from_checkpoint:
+            Agent.load_model(model)
+        e_state, p_state, reward, done = game_control.game_action_api(0)
 
     while True:
         if config.GAME_MODE == config.GameMode.NORMAL.value:
-            # count all
             game_control.normal_loop_body()
-            # draw all
-            if game_control.game.is_game_running():
-                background.draw_statics(screen)
-                background.refresh_on_screen(screen)
-                game_control.game.draw_stage(screen)
-            else:
-                background.draw_intro(screen)
-            # control environ
-            clock.tick(config.FRAME_RATE)
-        else:
+        elif config.GAME_MODE == config.GameMode.API_PLAY.value:
+            action = Agent.choose_action((e_state, p_state), model)
+            e_state, p_state, reward, done = game_control.game_action_api(action)
+
             game_control.api_loop_body()
+        # draw all
+        if game_control.game.is_game_running():
+            background.draw_statics(screen)
+            background.refresh_on_screen(screen)
+            game_control.game.draw_stage(screen)
+        else:
+            background.draw_intro(screen)
+        # control environ
+        clock.tick(config.FRAME_RATE)
 
         pygame.display.update()
 

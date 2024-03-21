@@ -12,7 +12,7 @@ class TimeEvents(Enum):
     ELAPSED_EVENT = 2
 
 
-GAME_MODE = GameMode.API_LEARN.value
+GAME_MODE = GameMode.API_PLAY.value
 
 GAME_TITLE = "Blue Drop Journey"
 

@@ -25,6 +25,11 @@ class AbstractGameControl:
             self._background = None
         self._game = Game(self._background)
         self._action = GameAction.NO_ACTION
+        self._done = False
+
+    @staticmethod
+    def action_space_size():
+        return len(GameAction) - 2  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
 
     @property
     def game(self):
@@ -60,9 +65,9 @@ class AbstractGameControl:
 
         reward = self._game.reward
 
-        done = self._game.game_state
+        self._done = self._game.game_state
 
-        return env_state, plr_state, reward, done
+        return env_state, plr_state, reward, self._done
 
     def game_action_normal(self, action):
         # Make actions
@@ -93,13 +98,20 @@ class AbstractGameControl:
             self._game.game_step()
 
     def api_loop_body(self):
-        # TODO (not finish) needed when model play
-        e_state, p_state, reward, done = self.game_action_api(self._action)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                self.game_action_normal(GameAction.QUIT.value)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    if self._game.is_game_over():
+                        self._game.reset_game()
+                    else:
+                        self._game.pause_game()
 
-        if GAME_MODE == GameMode.API_PLAY:
-            for event in pygame.event.get():
-                self._game.game_events(event)
+            self._game.game_events(event)
 
-        if done:
+        if self._done:
             self.execute_action(GameAction.QUIT.value)
-        self._game.game_step()
+        if self._game.is_game_running():
+            self._game.game_step()
+

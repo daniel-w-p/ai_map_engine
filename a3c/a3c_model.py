@@ -25,7 +25,7 @@ class A3CModel(Model):
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.LEARNING_RATE)
 
-    def call(self, inputs: tuple):
+    def call(self, inputs: tuple) -> tuple:
         cnn_input, dnn_input = inputs  # states
 
         # Inputs goes thru both nn
@@ -52,30 +52,42 @@ class A3CModel(Model):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
     @tf.function
-    def train_step(self, model, states, action, next_states, reward, done, gamma=0.99):
+    def train_step(self, experiences):
+        env_state, plr_state, actions, advantages, rewards = zip(*experiences)
+
+        print(f'Mean rewards: {rewards}')
+
+        state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
+        state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
+        actions = tf.convert_to_tensor(actions, dtype=tf.int32)
+        advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
+        rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
+
         with tf.GradientTape() as tape:
-            action_probs, value = model(states, training=True)
-            _, next_value = model(next_states, training=True)
+            action_probs, values = self.call((state_env_tensor, state_plr_tensor))
 
-            target_value = reward + (1 - done) * gamma * next_value
-            advantage = target_value - value
+            # actor loss
+            action_log_probs = tf.math.log(action_probs)
+            action_indices = tf.range(0, tf.shape(action_log_probs)[0]) * tf.shape(action_log_probs)[1] + actions
+            selected_action_log_probs = tf.gather(action_log_probs, action_indices)
+            advantages = tf.squeeze(advantages, axis=1)
+            actor_loss = -tf.reduce_mean(selected_action_log_probs * advantages)
 
-            a_loss = self.actor_loss(advantage, action, action_probs)
-            c_loss = self.critic_loss(value, target_value)
-            total_loss = a_loss + c_loss
+            # critic loss
+            critic_loss = tf.keras.losses.mean_squared_error(rewards, tf.squeeze(values))
 
-        grads = tape.gradient(total_loss, model.trainable_variables)
+            total_loss = actor_loss + critic_loss
+
+        grads = tape.gradient(total_loss, self.trainable_variables)
         grads, _ = tf.clip_by_global_norm(grads, clip_norm=1.0)
-        self.optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-        return total_loss
+        self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
     @staticmethod
     def create_cnn(input_shape):
         # TODO need to do some experiments (MaxPool ?)
         inputs = Input(shape=input_shape)
-        x = Conv2D(32, (3, 3), activation='relu')(inputs)
-        x = Conv2D(64, (3, 3), activation='relu')(x)
+        x = Conv2D(16, (3, 3), activation='relu')(inputs)
+        x = Conv2D(32, (3, 3), activation='relu')(x)
         x = Flatten()(x)
         return Model(inputs, x, name='cnn_submodel')
 

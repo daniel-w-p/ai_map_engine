@@ -47,6 +47,10 @@ class Player(Sprite):
         self.group = pygame.sprite.GroupSingle()
         self.group.add(self)
 
+    @staticmethod
+    def plr_state_size():
+        return 5  # position_x, position_y, velocity, jump_velocity, direction
+
     @property
     def image(self):
         subsurface = self._image_move.subsurface(self._subsurface_rect)

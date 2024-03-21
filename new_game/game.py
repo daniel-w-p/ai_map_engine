@@ -36,7 +36,7 @@ class Game:
         self._score = 0
         self._distance = 0
         self._high_score = 0
-        self._game_state = GameState.END.value
+        self._game_state = GameState.PAUSE.value
         self._environment_state = None
         self._play_time_start = pygame.time.get_ticks()
         self._map_decoder = MapDecoder()
@@ -73,6 +73,10 @@ class Game:
         self._play_time_start = pygame.time.get_ticks()
         if self._game_background is not None:
             self._game_background.set_player_life_text(str(self._player.life))
+
+    @staticmethod
+    def env_state_size():
+        return SCREEN_WIDTH // MINIMAP_ONE_PIXEL, SCREEN_HEIGHT // MINIMAP_ONE_PIXEL, 1
 
     def set_map_part(self, width, height, kind):
         if kind.value < 3:
@@ -262,8 +266,7 @@ class Game:
                 self._game_background.set_game_time_text(str(play_time // 1000))
 
     def update_environment_state(self):
-        mini_width = SCREEN_WIDTH // MINIMAP_ONE_PIXEL
-        mini_height = SCREEN_HEIGHT // MINIMAP_ONE_PIXEL
+        mini_width, mini_height, _ = self.env_state_size()
 
         mini_map = np.zeros((mini_width, mini_height))
 
@@ -286,15 +289,16 @@ class Game:
     def calculate_reward(self):
         scale_distance_param = 0.2
         scale_time_param = 0.002
+        life_factor = 2
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
-        return self._score + scale_distance_param * self._distance - scale_time_param * play_time
+        return life_factor * self._player.life + self._score + scale_distance_param * self._distance - scale_time_param * play_time
 
     @property
     def game_state(self) -> bool:  # check if game should be finish
         play_time = pygame.time.get_ticks() - self._play_time_start
-        return self.is_game_over() or play_time > 10000
+        return self.is_game_over()  # or play_time > 100000
 
     @property
     def environment_state(self):
@@ -314,3 +318,5 @@ class Game:
 
     def is_game_running(self):
         return self._game_state == GameState.RUN.value
+
+

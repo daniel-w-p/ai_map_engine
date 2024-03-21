@@ -1,5 +1,4 @@
 import pygame
-from new_game import config
 from new_game import GameCrl
 
 

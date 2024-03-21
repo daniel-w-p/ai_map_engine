@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import os
 import queue
 
 import pygame
@@ -6,54 +7,17 @@ import pygame
 import tensorflow as tf
 
 from a3c import Agent, A3CModel
-from new_game import config
 from environment import Environment
-
-
-def update_model(experiences, model):
-    """
-    Updates the main model based on the experiences collected from agents.
-
-    Args:
-    experiences (list): A list of experiences collected by agents. Each experience is a tuple
-    (states, action, advantage, reward).
-    model (A3CModel): An instance of the A3C model that will be updated.
-    """
-    # Prepare data
-    env_state, plr_state, actions, advantages, rewards = zip(*experiences)
-    state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
-    state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
-    actions = tf.convert_to_tensor(actions, dtype=tf.int32)
-    advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
-    rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
-
-    print(f'Rewards: {rewards}')
-
-    with tf.GradientTape() as tape:
-        action_probs, values = model((state_env_tensor, state_plr_tensor), training=True)
-
-        # actor loss
-        action_log_probs = tf.math.log(action_probs)
-        action_indices = tf.range(0, tf.shape(action_log_probs)[0]) * tf.shape(action_log_probs)[1] + actions
-        selected_action_log_probs = tf.gather(action_log_probs, action_indices)
-        advantages = tf.squeeze(advantages, axis=1)
-        actor_loss = -tf.reduce_mean(selected_action_log_probs * advantages)
-
-        # critic loss
-        critic_loss = tf.keras.losses.mean_squared_error(rewards, tf.squeeze(values))
-
-        total_loss = actor_loss + critic_loss
-
-    grads = tape.gradient(total_loss, model.trainable_variables)
-    grads, _ = tf.clip_by_global_norm(grads, clip_norm=1.0)
-    model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
+from new_game import Game, GameCrl
+from new_game.figures import Player
 
 
 def main():
-    env_state_shape = (config.SCREEN_WIDTH // config.MINIMAP_ONE_PIXEL, config.SCREEN_HEIGHT // config.MINIMAP_ONE_PIXEL, 1)
-    plr_state_shape = 5  # position_x, position_y, velocity, jump_velocity, direction
-    action_space = 5  # NO_ACTION = 0 STOP_MOVE = 1 RUN_LEFT = 2 RUN_RIGHT = 3 JUMP = 4
-    num_agents = 8
+    env_state_shape = Game.env_state_size()
+    plr_state_shape = Player.plr_state_size()
+    action_space = GameCrl.action_space_size()
+    num_agents = 4
+    epochs = 3
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -65,47 +29,64 @@ def main():
         except RuntimeError as e:
             print(e)
 
+    env = Environment()
     main_model = A3CModel(env_state_shape, plr_state_shape, action_space)
-    if start_from_checkpoint:
+    # Lazy build
+    env_state, plr_state = env.reset()
+    main_model((tf.convert_to_tensor([env_state], dtype=tf.float32), tf.convert_to_tensor([plr_state], dtype=tf.float32)))
+
+    main_model.summary()
+
+    if start_from_checkpoint and os.listdir(Agent.SAVE_DIR):
         print("Loading checkpoint...")
-        main_model.load_weights(Agent.SAVE_DIR)
+        main_model.load_weights(Agent.SAVE_DIR+Agent.SAVE_DIR)
 
     manager = mp.Manager()
-    weights_queue = manager.Queue()
-    experience_queue = manager.Queue()
 
-    print("Creating Agents")
-    agents = []
-    main_model_weights = main_model.get_weights()
-    for i in range(num_agents):
-        weights_queue.put(main_model_weights)
-        print("Creating Agent ", i)
-        agent = Agent(env_state_shape, plr_state_shape, action_space)
-        agent_process = mp.Process(target=Agent.learn,
-                                   args=(i, agent.shapes, weights_queue, experience_queue))
-        agents.append(agent_process)
-        agent_process.start()
+    for i in range(epochs):
+        print("Creating Agents")
+        weights_queue = manager.Queue()
+        experience_queue = manager.Queue()
+        agents = []
+        main_model_weights = main_model.get_weights()
 
-    print("Starting training")
-    experiences = []
-    while True:
-        try:
-            data = experience_queue.get(timeout=60)
-            experiences.append(data)
-        except queue.Empty:
-            print("Empty queue")
-        except EOFError:
-            print("Queue read error")
+        for a in range(num_agents):
+            weights_queue.put(main_model_weights)
+            print("Creating Agent ", a)
+            agent = Agent(env_state_shape, plr_state_shape, action_space)
+            agent_process = mp.Process(target=Agent.learn,
+                                       args=(a, agent.shapes, weights_queue, experience_queue))
+            agents.append(agent_process)
+            agent_process.start()
 
-        if len(experiences) == Agent.EXP_COUNTER * num_agents:
-            break  # when collect all
+        print(f"Starting training epoch: {i}")
+        experiences = []
+        while True:
+            try:
+                data = experience_queue.get(timeout=60)
+                experiences.append(data)
+            except queue.Empty:
+                print("Empty queue")
+            except EOFError:
+                print("Queue read error")
 
-    # Fin
-    for agent in agents:
-        agent.join()
+            if len(experiences) >= Agent.EXP_COUNTER * num_agents:
+                break  # when collect all
 
-    update_model(experiences, main_model)
-    main_model.save_weights(Agent.SAVE_DIR)
+        # Fin
+        for agent in agents:
+            agent.join()
+
+        # Update the main model based on the experiences collected from agents.
+        print(f'Epoch {i} finished. Updating main model weights')
+        main_model.train_step(experiences)
+
+        if i > 0 and i % 5 == 0:  # save interval - 5 epochs
+            epoch_dir = f'epoch_{i}/'
+            main_model.save_weights(Agent.SAVE_DIR+epoch_dir+Agent.SAVE_FILE)
+
+    # Save last epoch in main localization
+    main_model.save_weights(Agent.SAVE_DIR + Agent.SAVE_FILE)
 
 
 if __name__ == "__main__":
