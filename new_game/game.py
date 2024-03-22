@@ -4,7 +4,7 @@ from enum import Enum
 
 from new_game.map_decoder import MapDecoder, GameParticles
 from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
-from .config import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, GAME_MODE, GameMode, TimeEvents
+from .config import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, GameSetup, GameMode, TimeEvents
 from .game_background import GameBackground
 
 
@@ -23,7 +23,7 @@ class RewardPoints(Enum):
 
 class Game:
     def __init__(self, background: GameBackground = None):
-        if GAME_MODE == GameMode.API_LEARN.value:
+        if GameSetup.MODES["play_mode"] == GameMode.API_LEARN.value:
             print("Render is off")
 
         self._player = Player()
@@ -51,6 +51,9 @@ class Game:
 
         self.elapsed_event = pygame.USEREVENT + TimeEvents.ELAPSED_EVENT.value
         pygame.time.set_timer(self.elapsed_event, 500)
+
+        if self._game_background is not None:
+            self._game_background.set_player_life_text(str(self._player.life))
 
         self.init_map()
 
@@ -149,7 +152,7 @@ class Game:
         self.set_map_init_content()
 
     def draw_stage(self, screen):
-        if GAME_MODE != GameMode.API_LEARN.value:  # TODO ?? move from here to drawing ??
+        if GameSetup.MODES["play_mode"] != GameMode.API_LEARN.value:  # TODO ?? move from here to drawing ??
             self._environs.draw(screen)
             self._rewards.draw(screen)
             self._obstacles.draw(screen)
@@ -274,26 +277,34 @@ class Game:
             for j in range(mini_width):
                 for e in self._environs:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 0.0
-                for e in self._obstacles:
-                    if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = - 1.0
-                for e in self._rewards:
-                    if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 1.0  # TODO check if same value for all rewards is not wrong
+                        mini_map[j, i] = 0.4
+                for o in self._obstacles:
+                    if j == o.rect.x // MINIMAP_ONE_PIXEL and i == o.rect.y // MINIMAP_ONE_PIXEL:
+                        mini_map[j, i] = 0.1
+                for r in self._rewards:
+                    if j == r.rect.x // MINIMAP_ONE_PIXEL and i == r.rect.y // MINIMAP_ONE_PIXEL:
+                        if isinstance(r, Apple):
+                            mini_map[j, i] = 0.8
+                        elif isinstance(r, Pear):
+                            mini_map[j, i] = 0.9
+                        elif isinstance(r, Water):
+                            mini_map[j, i] = 1.0
+                        else:
+                            mini_map[j, i] = 1.0
         self._environment_state = mini_map.reshape(mini_width, mini_height, 1)
 
     def add_reward(self, reward: float):
         self._score += reward
 
     def calculate_reward(self):
-        scale_distance_param = 0.2
-        scale_time_param = 0.002
-        life_factor = 2
+        scale_distance_param = 0.005
+        scale_time_param = 0.001
+        life_factor = 0.1
+        score_factor = 1.2
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
-        return life_factor * self._player.life + self._score + scale_distance_param * self._distance - scale_time_param * play_time
+        return life_factor * self._player.life * score_factor * self._score + scale_distance_param * self._distance  # - scale_time_param * play_time
 
     @property
     def game_state(self) -> bool:  # check if game should be finish

@@ -4,13 +4,13 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, Concatenate
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0005
     COMMON_LAYER_UNITS = 32
-    COMMON_LAYER_ACTIVATION = 'relu'  # TODO later check tanh
+    COMMON_LAYER_ACTIVATION = 'relu'
 
     def __init__(self, cnn_input_shape, dnn_input_shape, action_space_size):
         super(A3CModel, self).__init__()
@@ -55,7 +55,7 @@ class A3CModel(Model):
     def train_step(self, experiences):
         env_state, plr_state, actions, advantages, rewards = zip(*experiences)
 
-        print(f'Mean rewards: {rewards}')
+        print(f'Mean reward: {np.mean(rewards)}')
 
         state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
@@ -86,8 +86,10 @@ class A3CModel(Model):
     def create_cnn(input_shape):
         # TODO need to do some experiments (MaxPool ?)
         inputs = Input(shape=input_shape)
-        x = Conv2D(16, (3, 3), activation='relu')(inputs)
+        x = Conv2D(32, (3, 3), activation='relu')(inputs)
         x = Conv2D(32, (3, 3), activation='relu')(x)
+        x = MaxPool2D()(x)
+        x = Conv2D(16, (3, 3), activation='relu')(x)
         x = Flatten()(x)
         return Model(inputs, x, name='cnn_submodel')
 

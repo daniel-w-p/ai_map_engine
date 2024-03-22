@@ -3,12 +3,11 @@ import os
 import queue
 
 import pygame
-
 import tensorflow as tf
 
 from a3c import Agent, A3CModel
 from environment import Environment
-from new_game import Game, GameCrl
+from new_game import Game, GameCrl, config
 from new_game.figures import Player
 
 
@@ -16,8 +15,8 @@ def main():
     env_state_shape = Game.env_state_size()
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
-    num_agents = 4
-    epochs = 3
+    num_agents = 6
+    epochs = 21
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -39,7 +38,7 @@ def main():
 
     if start_from_checkpoint and os.listdir(Agent.SAVE_DIR):
         print("Loading checkpoint...")
-        main_model.load_weights(Agent.SAVE_DIR+Agent.SAVE_DIR)
+        main_model.load_weights(Agent.SAVE_DIR+Agent.SAVE_FILE)
 
     manager = mp.Manager()
 
@@ -91,6 +90,7 @@ def main():
 
 if __name__ == "__main__":
     print("This module is not fully implemented yet")
+    config.GameSetup.set_mode(config.GameMode.API_LEARN)
     mp.set_start_method('spawn')
 
     pygame.init()

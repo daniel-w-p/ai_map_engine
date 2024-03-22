@@ -1,5 +1,5 @@
 import pygame
-from new_game import GameCrl
+from new_game import GameCrl, config
 
 
 class Environment:
@@ -18,6 +18,7 @@ class Environment:
         try:
             pygame.init()
             pygame.display.set_mode((1, 1), pygame.NOFRAME)
+            config.GameSetup.set_mode(config.GameMode.API_LEARN)
             self.game_control = GameCrl()
         except Exception as e:
             print("Game initializing error: " + str(e))

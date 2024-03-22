@@ -12,7 +12,13 @@ class TimeEvents(Enum):
     ELAPSED_EVENT = 2
 
 
-GAME_MODE = GameMode.API_PLAY.value
+class GameSetup:
+    MODES = {"play_mode": GameMode.API_PLAY.value}
+
+    @classmethod
+    def set_mode(cls, mode: GameMode):
+        cls.MODES["play_mode"] = mode.value
+
 
 GAME_TITLE = "Blue Drop Journey"
 
