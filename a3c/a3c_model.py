@@ -1,13 +1,15 @@
 # The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
 # This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
 
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.0005
+    LEARNING_RATE = 0.003
     COMMON_LAYER_UNITS = 32
     COMMON_LAYER_ACTIVATION = 'relu'
 
@@ -17,10 +19,14 @@ class A3CModel(Model):
         self.dnn = self.create_dnn(dnn_input_shape)
         self.action_space_size = action_space_size
 
+        # Create layers for join both NN
+        self.combined_output = Concatenate()
+        self.flatten = Flatten()
+
         # Create actor critic common and output layers
         self.common_dense = Dense(self.COMMON_LAYER_UNITS, activation=self.COMMON_LAYER_ACTIVATION)
         self.actor_out = Dense(action_space_size, activation='softmax')
-        self.critic_out = Dense(1)
+        self.critic_out = Dense(1, activation='linear')
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.LEARNING_RATE)
 
@@ -31,7 +37,8 @@ class A3CModel(Model):
         cnn_output = self.cnn(cnn_input)
         dnn_output = self.dnn(dnn_input)
 
-        combined_output = Concatenate()([cnn_output, dnn_output])
+        flatten = self.flatten(cnn_output)
+        combined_output = self.combined_output([flatten, dnn_output])
         common_output = self.common_dense(combined_output)
 
         # Actor & critic output - Policy & Value
@@ -75,18 +82,29 @@ class A3CModel(Model):
 
     @staticmethod
     def create_cnn(input_shape):
-        # TODO need to do some experiments (MaxPool ?)
         inputs = Input(shape=input_shape)
         x = Conv2D(32, (3, 3), activation='relu')(inputs)
-        x = Conv2D(32, (3, 3), activation='relu')(x)
-        x = MaxPool2D()(x)
         x = Conv2D(16, (3, 3), activation='relu')(x)
-        x = Flatten()(x)
+        x = MaxPool2D()(x)
+        x = Conv2D(8, (3, 3), activation='relu')(x)
+        # x = Flatten()(x)  # moved this due to visualize outputs
         return Model(inputs, x, name='cnn_submodel')
 
     @staticmethod
     def create_dnn(input_shape):
         inputs = Input(shape=(input_shape,))
-        x = Dense(128, activation='relu')(inputs)
+        x = Dense(64, activation='relu')(inputs)
         x = Dense(64, activation='relu')(x)
         return Model(inputs, x, name='dnn_submodel')
+
+    @staticmethod
+    def visualize_feature_maps(model, input_map, output_dir='feature_maps'):
+
+        feature_maps = model.cnn.predict(input_map)
+
+        for i in range(feature_maps.shape[-1]):
+            plt.figure(figsize=(2, 2))
+            plt.imshow(feature_maps[0, :, :, i], cmap='viridis')
+            plt.axis('off')
+            plt.savefig(f'{output_dir}/feature_map_{i}.png')
+            plt.close()

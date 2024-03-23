@@ -5,7 +5,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 500  # how many experiences (actions in game)
+    EXP_COUNTER = 150  # how many experiences (actions in game)
     SAVE_DIR = './saves/'
     SAVE_FILE = 'a3c_model'
 
@@ -57,7 +57,7 @@ class Agent:
                                        tf.convert_to_tensor([next_plr_state], dtype=tf.float32)))
 
                 if done:
-                    reward -= 10
+                    reward -= 5
 
                 target_value = reward + (1 - done) * gamma * next_value
                 advantage = target_value - value

@@ -2,3 +2,4 @@ tensorflow~=2.10.1
 pygame~=2.5.2
 numpy~=1.24.3
 pillow~=9.5.0
+matplotlib~=3.7.1

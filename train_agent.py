@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import os
 import queue
+import sys
 
 import numpy as np
 import pygame
@@ -17,7 +18,7 @@ def main():
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
     num_agents = 6
-    epochs = 21
+    epochs = 11
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -61,6 +62,12 @@ def main():
 
         print(f"Starting training epoch: {i}")
         experiences = []
+
+        # For progress monitoring
+        total_steps = Agent.EXP_COUNTER * num_agents
+        step_size = total_steps // 100
+        last_step = 0
+
         while True:
             try:
                 data = experience_queue.get(timeout=60)
@@ -70,23 +77,40 @@ def main():
             except EOFError:
                 print("Queue read error")
 
-            if len(experiences) >= Agent.EXP_COUNTER * num_agents:
+            actual_step = len(experiences)
+
+            if actual_step >= total_steps:
+                print(f'\rEpoch: {i} --> 100% Complete ')
                 break  # when collect all
+            elif last_step < actual_step // step_size:
+                last_step = actual_step // step_size
+                percent_complete = (actual_step / total_steps) * 100
+
+                # Progress bar
+                num_hashes = int((percent_complete / 100) * 20)
+                progress_bar = '#' * num_hashes + '-' * (20 - num_hashes)
+
+                # Progress
+                sys.stdout.write(f'\rEpoch: {i} --> [{progress_bar}] {percent_complete:.1f}% Complete ')
+                sys.stdout.flush()
 
         # Fin
         for agent in agents:
             agent.join()
 
-        # Update the main model based on the experiences collected from agents.
+        # Some logs.
         print(f'Epoch {i} finished. Updating main model weights')
         rewards = [reward for _, _, _, _, reward in experiences]
         print(f'Mean reward: {np.mean(rewards)}')
 
+        # Update the main model based on the experiences collected from agents.
         main_model.train_step(experiences)
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs
             epoch_dir = f'epoch_{i}/'
             main_model.save_weights(Agent.SAVE_DIR+epoch_dir+Agent.SAVE_FILE)
+            # Plotting
+            A3CModel.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
     # Save last epoch in main localization
     main_model.save_weights(Agent.SAVE_DIR + Agent.SAVE_FILE)

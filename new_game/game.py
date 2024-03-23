@@ -79,7 +79,7 @@ class Game:
 
     @staticmethod
     def env_state_size():
-        return SCREEN_WIDTH // MINIMAP_ONE_PIXEL, SCREEN_HEIGHT // MINIMAP_ONE_PIXEL, 1
+        return SCREEN_HEIGHT // MINIMAP_ONE_PIXEL, SCREEN_WIDTH // MINIMAP_ONE_PIXEL, 1
 
     def set_map_part(self, width, height, kind):
         if kind.value < 3:
@@ -269,42 +269,43 @@ class Game:
                 self._game_background.set_game_time_text(str(play_time // 1000))
 
     def update_environment_state(self):
-        mini_width, mini_height, _ = self.env_state_size()
+        mini_height, mini_width, _ = self.env_state_size()
 
-        mini_map = np.zeros((mini_width, mini_height))
+        mini_map = np.zeros((mini_height, mini_width))
 
         for i in range(mini_height):
             for j in range(mini_width):
                 for e in self._environs:
                     if j == e.rect.x // MINIMAP_ONE_PIXEL and i == e.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 0.4
+                        mini_map[i, j] = 0.4
                 for o in self._obstacles:
                     if j == o.rect.x // MINIMAP_ONE_PIXEL and i == o.rect.y // MINIMAP_ONE_PIXEL:
-                        mini_map[j, i] = 0.1
+                        mini_map[i, j] = 0.1
                 for r in self._rewards:
                     if j == r.rect.x // MINIMAP_ONE_PIXEL and i == r.rect.y // MINIMAP_ONE_PIXEL:
                         if isinstance(r, Apple):
-                            mini_map[j, i] = 0.8
+                            mini_map[i, j] = 0.8
                         elif isinstance(r, Pear):
-                            mini_map[j, i] = 0.9
+                            mini_map[i, j] = 0.9
                         elif isinstance(r, Water):
-                            mini_map[j, i] = 1.0
+                            mini_map[i, j] = 1.0
                         else:
-                            mini_map[j, i] = 1.0
-        self._environment_state = mini_map.reshape(mini_width, mini_height, 1)
+                            mini_map[i, j] = 1.0
+                
+        self._environment_state = mini_map.reshape(mini_height, mini_width, 1)
 
     def add_reward(self, reward: float):
         self._score += reward
 
     def calculate_reward(self):
         scale_distance_param = 0.005
-        scale_time_param = 0.001
+        scale_time_param = 0.0001
         life_factor = 0.1
         score_factor = 1.2
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
-        return life_factor * self._player.life * score_factor * self._score + scale_distance_param * self._distance  # - scale_time_param * play_time
+        return life_factor * self._player.life * score_factor * self._score + scale_distance_param * self._distance - scale_time_param * play_time
 
     @property
     def game_state(self) -> bool:  # check if game should be finish
