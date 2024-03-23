@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 
 from a3c import A3CModel
@@ -63,7 +62,9 @@ class Agent:
                 target_value = reward + (1 - done) * gamma * next_value
                 advantage = target_value - value
 
-                experience = (env_state, plr_state, action, advantage.numpy(), reward)
+                one_hot_action = tf.one_hot(action, depth=action_space)
+
+                experience = (env_state, plr_state, one_hot_action, advantage.numpy(), reward)
                 experience_queue.put(experience)  # ((agent_id, experience))
 
                 states = (next_env_state, next_plr_state)

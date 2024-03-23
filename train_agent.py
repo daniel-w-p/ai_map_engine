@@ -2,6 +2,7 @@ import multiprocessing as mp
 import os
 import queue
 
+import numpy as np
 import pygame
 import tensorflow as tf
 
@@ -78,6 +79,9 @@ def main():
 
         # Update the main model based on the experiences collected from agents.
         print(f'Epoch {i} finished. Updating main model weights')
+        rewards = [reward for _, _, _, _, reward in experiences]
+        print(f'Mean reward: {np.mean(rewards)}')
+
         main_model.train_step(experiences)
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs

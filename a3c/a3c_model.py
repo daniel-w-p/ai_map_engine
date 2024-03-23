@@ -1,7 +1,6 @@
 # The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
 # This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate
@@ -45,6 +44,7 @@ class A3CModel(Model):
         action_probs = tf.clip_by_value(action_probs, 1e-8, 1 - 1e-8)  # 1e-8 - to prevent log(0) error
         log_probs = tf.math.log(action_probs)
         selected_log_probs = tf.reduce_sum(log_probs * actions, axis=1, keepdims=True)
+        advantages = tf.squeeze(advantages, axis=1)
         loss = -tf.reduce_mean(selected_log_probs * advantages)
         return loss
 
@@ -55,26 +55,17 @@ class A3CModel(Model):
     def train_step(self, experiences):
         env_state, plr_state, actions, advantages, rewards = zip(*experiences)
 
-        print(f'Mean reward: {np.mean(rewards)}')
-
         state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
-        actions = tf.convert_to_tensor(actions, dtype=tf.int32)
         advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
         rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
 
         with tf.GradientTape() as tape:
             action_probs, values = self.call((state_env_tensor, state_plr_tensor))
 
-            # actor loss
-            action_log_probs = tf.math.log(action_probs)
-            action_indices = tf.range(0, tf.shape(action_log_probs)[0]) * tf.shape(action_log_probs)[1] + actions
-            selected_action_log_probs = tf.gather(action_log_probs, action_indices)
-            advantages = tf.squeeze(advantages, axis=1)
-            actor_loss = -tf.reduce_mean(selected_action_log_probs * advantages)
+            actor_loss = self.actor_loss(advantages, actions, action_probs)
 
-            # critic loss
-            critic_loss = tf.keras.losses.mean_squared_error(rewards, tf.squeeze(values))
+            critic_loss = self.critic_loss(rewards, tf.squeeze(values))
 
             total_loss = actor_loss + critic_loss
 
