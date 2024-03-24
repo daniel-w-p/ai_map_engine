@@ -18,7 +18,7 @@ def main():
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
     num_agents = 6
-    epochs = 11
+    epochs = 25
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -81,18 +81,25 @@ def main():
 
             if actual_step >= total_steps:
                 print(f'\rEpoch: {i} --> 100% Complete ')
+                print("Total experiences:", len(experiences))
+                # env_states, plr_states, actions, advantages, rewards = zip(*experiences)
+                # print("Env_state shape:", np.shape(env_states))
+                # print("Plr_state shape:", np.shape(plr_states))
+                # print("Actions shape:", np.shape(actions))
+                # print("Advantages shape:", np.shape(advantages))
+                # print("Rewards shape:", np.shape(rewards))
                 break  # when collect all
-            elif last_step < actual_step // step_size:
-                last_step = actual_step // step_size
-                percent_complete = (actual_step / total_steps) * 100
-
-                # Progress bar
-                num_hashes = int((percent_complete / 100) * 20)
-                progress_bar = '#' * num_hashes + '-' * (20 - num_hashes)
-
-                # Progress
-                sys.stdout.write(f'\rEpoch: {i} --> [{progress_bar}] {percent_complete:.1f}% Complete ')
-                sys.stdout.flush()
+            # elif last_step < actual_step // step_size:
+            #     last_step = actual_step // step_size
+            #     percent_complete = (actual_step / total_steps) * 100
+            #
+            #     # Progress bar
+            #     num_hashes = int((percent_complete / 100) * 20)
+            #     progress_bar = '#' * num_hashes + '-' * (20 - num_hashes)
+            #
+            #     # Progress
+            #     sys.stdout.write(f'\rEpoch: {i} --> [{progress_bar}] {percent_complete:.1f}% Complete ')
+            #     sys.stdout.flush()
 
         # Fin
         for agent in agents:
@@ -114,6 +121,8 @@ def main():
 
     # Save last epoch in main localization
     main_model.save_weights(Agent.SAVE_DIR + Agent.SAVE_FILE)
+    # Plotting
+    A3CModel.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
 
 if __name__ == "__main__":

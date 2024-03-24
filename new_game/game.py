@@ -291,7 +291,8 @@ class Game:
                             mini_map[i, j] = 1.0
                         else:
                             mini_map[i, j] = 1.0
-                
+                if j == self._player.rect.x // MINIMAP_ONE_PIXEL and i == self._player.rect.y // MINIMAP_ONE_PIXEL:
+                    mini_map[i, j] = 0.6
         self._environment_state = mini_map.reshape(mini_height, mini_width, 1)
 
     def add_reward(self, reward: float):

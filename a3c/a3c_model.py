@@ -1,17 +1,19 @@
 # The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
 # This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
+import os
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 
 class A3CModel(Model):
     LEARNING_RATE = 0.003
+    CLIP_NORM = 10.0
     COMMON_LAYER_UNITS = 32
-    COMMON_LAYER_ACTIVATION = 'relu'
+    COMMON_LAYER_ACTIVATION = 'tanh'
 
     def __init__(self, cnn_input_shape, dnn_input_shape, action_space_size):
         super(A3CModel, self).__init__()
@@ -58,9 +60,11 @@ class A3CModel(Model):
     def critic_loss(self, estimated_values, true_values):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
-    @tf.function
+    @tf.function(reduce_retracing=True)
     def train_step(self, experiences):
         env_state, plr_state, actions, advantages, rewards = zip(*experiences)
+
+        one_hot_action = tf.one_hot(actions, depth=self.action_space_size)
 
         state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
@@ -70,37 +74,44 @@ class A3CModel(Model):
         with tf.GradientTape() as tape:
             action_probs, values = self.call((state_env_tensor, state_plr_tensor))
 
-            actor_loss = self.actor_loss(advantages, actions, action_probs)
+            actor_loss = self.actor_loss(advantages, one_hot_action, action_probs)
 
             critic_loss = self.critic_loss(rewards, tf.squeeze(values))
 
             total_loss = actor_loss + critic_loss
 
         grads = tape.gradient(total_loss, self.trainable_variables)
-        grads, _ = tf.clip_by_global_norm(grads, clip_norm=1.0)
+        grads, _ = tf.clip_by_global_norm(grads, clip_norm=self.CLIP_NORM)
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
     @staticmethod
     def create_cnn(input_shape):
         inputs = Input(shape=input_shape)
-        x = Conv2D(32, (3, 3), activation='relu')(inputs)
-        x = Conv2D(16, (3, 3), activation='relu')(x)
+        x = Conv2D(16, (3, 3))(inputs)
+        x = LeakyReLU(alpha=0.1)(x)
+        x = Conv2D(32, (1, 1))(x)
+        x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(8, (3, 3), activation='relu')(x)
-        # x = Flatten()(x)  # moved this due to visualize outputs
+        x = Conv2D(32, (1, 1))(x)
+        x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='cnn_submodel')
 
     @staticmethod
     def create_dnn(input_shape):
         inputs = Input(shape=(input_shape,))
-        x = Dense(64, activation='relu')(inputs)
-        x = Dense(64, activation='relu')(x)
+        x = Dense(64)(inputs)
+        x = LeakyReLU(alpha=0.1)(x)
+        x = Dense(64)(x)
+        x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='dnn_submodel')
 
     @staticmethod
     def visualize_feature_maps(model, input_map, output_dir='feature_maps'):
 
         feature_maps = model.cnn.predict(input_map)
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         for i in range(feature_maps.shape[-1]):
             plt.figure(figsize=(2, 2))

@@ -5,7 +5,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 150  # how many experiences (actions in game)
+    EXP_COUNTER = 200  # how many experiences (actions in game)
     SAVE_DIR = './saves/'
     SAVE_FILE = 'a3c_model'
 
@@ -62,9 +62,7 @@ class Agent:
                 target_value = reward + (1 - done) * gamma * next_value
                 advantage = target_value - value
 
-                one_hot_action = tf.one_hot(action, depth=action_space)
-
-                experience = (env_state, plr_state, one_hot_action, advantage.numpy(), reward)
+                experience = (env_state, plr_state, action, advantage.numpy(), reward)
                 experience_queue.put(experience)  # ((agent_id, experience))
 
                 states = (next_env_state, next_plr_state)

@@ -77,7 +77,7 @@ class Player(Sprite):
 
     @property
     def player_state(self):
-        return self.rect.x, self.rect.y, self._velocity, self._jump_v, int(self._right_direction)
+        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._jump_v, int(self._right_direction)
 
     def live_reset(self):
         self._life = self.MAX_LIFE
