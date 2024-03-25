@@ -10,15 +10,15 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.003
+    LEARNING_RATE = 0.001
     CLIP_NORM = 10.0
     COMMON_LAYER_UNITS = 32
-    COMMON_LAYER_ACTIVATION = 'tanh'
+    COMMON_LAYER_ACTIVATION = 'relu'
 
-    def __init__(self, cnn_input_shape, dnn_input_shape, action_space_size):
+    def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
-        self.cnn = self.create_cnn(cnn_input_shape)
-        self.dnn = self.create_dnn(dnn_input_shape)
+        self.map_nn = self.create_map_nn(map_input_shape)
+        self.plr_nn = self.create_plr_nn(plr_input_shape)
         self.action_space_size = action_space_size
 
         # Create layers for join both NN
@@ -32,15 +32,17 @@ class A3CModel(Model):
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.LEARNING_RATE)
 
+    # TODO change if cnn stay
     def call(self, inputs: tuple) -> tuple:
         cnn_input, dnn_input = inputs  # states
 
-        # Inputs goes thru both nn
-        cnn_output = self.cnn(cnn_input)
-        dnn_output = self.dnn(dnn_input)
+        flatten = self.flatten(cnn_input)
 
-        flatten = self.flatten(cnn_output)
-        combined_output = self.combined_output([flatten, dnn_output])
+        # Inputs goes thru both nn
+        cnn_output = self.map_nn(flatten)
+        dnn_output = self.plr_nn(dnn_input)
+
+        combined_output = self.combined_output([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
 
         # Actor & critic output - Policy & Value
@@ -85,7 +87,17 @@ class A3CModel(Model):
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
     @staticmethod
-    def create_cnn(input_shape):
+    def create_map_nn(input_shape):
+        input_size = input_shape[0]*input_shape[1]*input_shape[2]
+        inputs = Input(shape=(input_size,))
+        x = Dense(256)(inputs)
+        x = LeakyReLU(alpha=0.1)(x)
+        x = Dense(128)(x)
+        x = LeakyReLU(alpha=0.1)(x)
+        return Model(inputs, x, name='dnn_submodel')
+
+    @staticmethod
+    def create_map_cnn(input_shape):
         inputs = Input(shape=input_shape)
         x = Conv2D(16, (3, 3))(inputs)
         x = LeakyReLU(alpha=0.1)(x)
@@ -97,7 +109,7 @@ class A3CModel(Model):
         return Model(inputs, x, name='cnn_submodel')
 
     @staticmethod
-    def create_dnn(input_shape):
+    def create_plr_nn(input_shape):
         inputs = Input(shape=(input_shape,))
         x = Dense(64)(inputs)
         x = LeakyReLU(alpha=0.1)(x)
@@ -108,7 +120,7 @@ class A3CModel(Model):
     @staticmethod
     def visualize_feature_maps(model, input_map, output_dir='feature_maps'):
 
-        feature_maps = model.cnn.predict(input_map)
+        feature_maps = model.map_nn.predict(input_map)
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)

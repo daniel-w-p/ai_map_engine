@@ -1,7 +1,7 @@
 import pygame
 from sys import exit
 from .game import Game
-from .config import GameSetup, GameMode
+from .config import ProjectSetup, GameMode
 from .game_background import GameBackground
 
 from enum import Enum
@@ -19,7 +19,7 @@ class GameAction(Enum):
 
 class AbstractGameControl:
     def __init__(self):
-        if GameSetup.MODES["play_mode"] != GameMode.API_LEARN.value:
+        if ProjectSetup.MODES["play_mode"] != GameMode.API_LEARN.value:
             self._background = GameBackground()  # background not related with map
         else:
             self._background = None

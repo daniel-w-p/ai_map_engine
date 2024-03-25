@@ -17,7 +17,7 @@ def run_game():
     play_from_checkpoint = True
     e_state, p_state, reward, done = None, None, None, False
 
-    if config.GameSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
+    if config.ProjectSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
         print("Start game in AI mode (model control)")
         env_state_shape = Game.env_state_size()
         plr_state_shape = Player.plr_state_size()
@@ -28,10 +28,10 @@ def run_game():
         e_state, p_state, reward, done = game_control.game_action_api(0)
 
     while True:
-        if config.GameSetup.MODES["play_mode"] == config.GameMode.NORMAL.value:
+        if config.ProjectSetup.MODES["play_mode"] == config.GameMode.NORMAL.value:
             game_control.normal_loop_body()
-        elif config.GameSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
-            action, _ = Agent.choose_action((e_state, p_state), model)
+        elif config.ProjectSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
+            action, _ = Agent.choose_action((e_state, p_state), model, True)
             e_state, p_state, reward, done = game_control.game_action_api(action)
 
             game_control.api_loop_body()

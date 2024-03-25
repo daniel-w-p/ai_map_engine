@@ -27,12 +27,17 @@ class Agent:
         model.load_weights(save_dir)
 
     @staticmethod
-    def choose_action(states, model):
+    def choose_action(states, model, play=False):
         env_state, plr_state = states
         state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor([plr_state], dtype=tf.float32)
+
         action_probs, value = model((state_env_tensor, state_plr_tensor), training=False)
-        action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
+
+        if play:
+            action = tf.argmax(action_probs, axis=-1)[0]
+        else:
+            action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
         return action.numpy(), value
 
     @staticmethod
