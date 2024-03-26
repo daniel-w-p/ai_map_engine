@@ -310,7 +310,7 @@ class Game:
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
-        return life_factor * self._player.life * score_factor * self._score  # + scale_distance_param * self._distance - scale_time_param * play_time
+        return life_factor * self._player.life * score_factor * self._score - scale_time_param * play_time  # + scale_distance_param * self._distance
 
     @property
     def game_state(self) -> bool:  # check if game should be finish

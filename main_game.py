@@ -33,7 +33,6 @@ def run_game():
         elif config.ProjectSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
             action, _ = Agent.choose_action((e_state, p_state), model, True)
             e_state, p_state, reward, done = game_control.game_action_api(action)
-
             game_control.api_loop_body()
         # draw all
         if game_control.game.is_game_running():

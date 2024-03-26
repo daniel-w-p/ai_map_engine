@@ -55,6 +55,7 @@ class Agent:
             done = False
             states = env.reset()
             env_state, plr_state = states
+            last_reward = 0
             while not done and episode < Agent.EXP_COUNTER:
                 action, value = Agent.choose_action(states, model)
                 next_env_state, next_plr_state, reward, done = env.step(action)
@@ -63,6 +64,8 @@ class Agent:
 
                 if done:
                     reward -= 5
+
+                reward, last_reward = reward - last_reward, reward
 
                 target_value = reward + (1 - done) * gamma * next_value
                 advantage = target_value - value

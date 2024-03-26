@@ -40,7 +40,7 @@ class Player(Sprite):
         self._velocity = 0
         self._momentum = 0
         self._gravity = self.MAX_GRAVITY
-        self._jump_v = 0
+        self._jump_v = -1
         self._right_direction = True
         self._on_ground = False
 
@@ -88,7 +88,7 @@ class Player(Sprite):
     def movement_reset(self):
         self._velocity = 0
         self._momentum = 0
-        self._jump_v = 0
+        self._jump_v = -1
         self._right_direction = True
         self._on_ground = False
 
@@ -117,12 +117,15 @@ class Player(Sprite):
             self._jump_v = self.MAX_JUMP_VELOCITY - 0.5 * self._velocity
 
     def move(self, to_right: bool):
+        if to_right != self._right_direction:
+            self._velocity = 0
+            self._momentum = 0
         self._right_direction = to_right
         self._velocity += 1
 
     def retard(self):
         self._velocity = 0
-        self._momentum += self.MAX_VELOCITY - 1
+        self._momentum = self.MAX_VELOCITY - 1
 
     def scroll_screen(self, to_right: bool):
         if self._scroll_value == 0:
@@ -187,7 +190,7 @@ class Player(Sprite):
 
     def fall_out(self):
         self._rect.y = -100
-        self._jump_v = 0
+        self._jump_v = 1
         self._life -= ObstaclesDamage.OUT_OF_SCREEN.value
 
     def draw(self, screen):

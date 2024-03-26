@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0002
     CLIP_NORM = 10.0
     COMMON_LAYER_UNITS = 32
     COMMON_LAYER_ACTIVATION = 'relu'
@@ -63,18 +63,10 @@ class A3CModel(Model):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
     @tf.function(reduce_retracing=True)
-    def train_step(self, experiences):
-        env_state, plr_state, actions, advantages, rewards = zip(*experiences)
-
-        one_hot_action = tf.one_hot(actions, depth=self.action_space_size)
-
-        state_env_tensor = tf.convert_to_tensor(env_state, dtype=tf.float32)
-        state_plr_tensor = tf.convert_to_tensor(plr_state, dtype=tf.float32)
-        advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
-        rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
+    def train_step(self, env_state, plr_state, one_hot_action, advantages, rewards):
 
         with tf.GradientTape() as tape:
-            action_probs, values = self.call((state_env_tensor, state_plr_tensor))
+            action_probs, values = self.call((env_state, plr_state))
 
             actor_loss = self.actor_loss(advantages, one_hot_action, action_probs)
 
@@ -92,9 +84,9 @@ class A3CModel(Model):
         inputs = Input(shape=(input_size,))
         x = Dense(256)(inputs)
         x = LeakyReLU(alpha=0.1)(x)
-        x = Dense(128)(x)
+        x = Dense(96)(x)
         x = LeakyReLU(alpha=0.1)(x)
-        return Model(inputs, x, name='dnn_submodel')
+        return Model(inputs, x, name='map_nn_submodel')
 
     @staticmethod
     def create_map_cnn(input_shape):
@@ -106,16 +98,16 @@ class A3CModel(Model):
         x = MaxPool2D()(x)
         x = Conv2D(32, (1, 1))(x)
         x = LeakyReLU(alpha=0.1)(x)
-        return Model(inputs, x, name='cnn_submodel')
+        return Model(inputs, x, name='map_cnn_submodel')
 
     @staticmethod
     def create_plr_nn(input_shape):
         inputs = Input(shape=(input_shape,))
         x = Dense(64)(inputs)
         x = LeakyReLU(alpha=0.1)(x)
-        x = Dense(64)(x)
+        x = Dense(32)(x)
         x = LeakyReLU(alpha=0.1)(x)
-        return Model(inputs, x, name='dnn_submodel')
+        return Model(inputs, x, name='plr_nn_submodel')
 
     @staticmethod
     def visualize_feature_maps(model, input_map, output_dir='feature_maps'):
