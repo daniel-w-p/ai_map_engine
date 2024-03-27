@@ -304,8 +304,8 @@ class Game:
 
     def calculate_reward(self):
         scale_distance_param = 0.005
-        scale_time_param = 0.0001
-        life_factor = 0.1
+        scale_time_param = 0.00001
+        life_factor = 0.2
         score_factor = 1.2
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start

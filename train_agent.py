@@ -43,6 +43,9 @@ def main():
         main_model.load_weights(Agent.SAVE_DIR+Agent.SAVE_FILE)
 
     manager = mp.Manager()
+    actor_losses = []
+    critic_losses = []
+    total_losses = []
 
     for i in range(epochs):
         print("Creating Agents")
@@ -51,6 +54,7 @@ def main():
         agents = []
         main_model_weights = main_model.get_weights()
 
+        # Prepare and run agents (multiprocessing)
         for a in range(num_agents):
             weights_queue.put(main_model_weights)
             print("Creating Agent ", a)
@@ -105,28 +109,26 @@ def main():
         print(f'Mean reward: {np.mean(rewards)}')
 
         # Update the main model based on the experiences collected from agents.
-        env_state, plr_state, actions, advantages, rewards = zip(*experiences)
-
-        one_hot_action = tf.one_hot(actions, depth=action_space)
-        env_state = tf.convert_to_tensor(env_state, dtype=tf.float32)
-        plr_state = tf.convert_to_tensor(plr_state, dtype=tf.float32)
-        advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
-        rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
-
-        main_model.train_step(env_state, plr_state, one_hot_action, advantages, rewards)
+        actor_loss, critic_loss, total_loss = Agent.unpack_exp_and_step(main_model, experiences, action_space)
+        actor_losses.append(actor_loss)
+        critic_losses.append(critic_loss)
+        total_losses.append(total_loss)
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs
             epoch_dir = f'epoch_{i}/'
             main_model.save_weights(Agent.SAVE_DIR+epoch_dir+Agent.SAVE_FILE)
-            # Plotting
+            # Plotting features (CNN)
             if config.ProjectSetup.MODES["map_nn_mode"] == config.MapNN.CNN:
-                A3CModel.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
+                Agent.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
     # Save last epoch in main localization
     main_model.save_weights(Agent.SAVE_DIR + Agent.SAVE_FILE)
-    # Plotting
+    # Save losses
+    Agent.save_losses_csv(actor_losses, critic_losses, total_losses)
+    # Plotting losses and features (CNN)
+    Agent.plot_losses(actor_losses, critic_losses, total_losses)
     if config.ProjectSetup.MODES["map_nn_mode"] == config.MapNN.CNN:
-        A3CModel.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
+        Agent.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
 
 if __name__ == "__main__":

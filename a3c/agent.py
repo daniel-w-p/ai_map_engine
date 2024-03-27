@@ -1,11 +1,15 @@
+import os
+
+import pandas as pd
 import tensorflow as tf
+from matplotlib import pyplot as plt
 
 from a3c import A3CModel
 from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 200  # how many experiences (actions in game)
+    EXP_COUNTER = 400  # how many experiences (actions in game)
     SAVE_DIR = './saves/'
     SAVE_FILE = 'a3c_model'
 
@@ -41,6 +45,18 @@ class Agent:
         return action.numpy(), value
 
     @staticmethod
+    def unpack_exp_and_step(model, experiences, action_space):
+        env_state, plr_state, actions, advantages, rewards = zip(*experiences)
+
+        one_hot_action = tf.one_hot(actions, depth=action_space)
+        env_state = tf.convert_to_tensor(env_state, dtype=tf.float32)
+        plr_state = tf.convert_to_tensor(plr_state, dtype=tf.float32)
+        advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
+        rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
+
+        return model.train_step(env_state, plr_state, one_hot_action, advantages, rewards)
+
+    @staticmethod
     def learn(agent_id, shapes, model_weights_queue, experience_queue, gamma=0.98):
         env_state_shape, player_state_shape, action_space = shapes
         model = A3CModel(env_state_shape, player_state_shape, action_space)
@@ -51,6 +67,8 @@ class Agent:
         model.set_weights(new_weights)
 
         episode = 0
+        local_experience = []
+
         while episode < Agent.EXP_COUNTER:
             done = False
             states = env.reset()
@@ -72,9 +90,58 @@ class Agent:
 
                 experience = (env_state, plr_state, action, advantage.numpy(), reward)
                 experience_queue.put(experience)  # ((agent_id, experience))
+                local_experience.append(experience)
 
                 states = (next_env_state, next_plr_state)
                 episode += 1
 
+            if episode % 101 == 0:
+                Agent.unpack_exp_and_step(model, local_experience, action_space)
+                local_experience.clear()
+
         tf.keras.backend.clear_session()
+
+    @staticmethod
+    def save_losses_csv(actor_losses, critic_losses, total_losses, output_dir='data/losses'):
+        losses_df = pd.DataFrame({
+            'Actor Loss': actor_losses,
+            'Critic Loss': critic_losses,
+            'Total Loss': total_losses
+        })
+        file = os.path.join(output_dir, 'losses.csv')
+        # save to file
+        losses_df.to_csv(file, index=False)
+
+    @staticmethod
+    def plot_losses(actor_losses, critic_losses, total_losses, output_dir='data/losses'):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        file = os.path.join(output_dir, 'losses.png')
+
+        plt.figure(figsize=(5, 5))
+        plt.plot(actor_losses, label='Actor Loss')
+        plt.plot(critic_losses, label='Critic Loss')
+        plt.plot(total_losses, label='Total Loss')
+        plt.xlabel('Steps')
+        plt.ylabel('Loss')
+        plt.title('Losses over Time')
+        plt.legend()
+        plt.savefig(file)
+        plt.close()
+
+    @staticmethod
+    def visualize_feature_maps(model, input_map, output_dir='data/feature_maps'):
+
+        feature_maps = model.map_nn.predict(input_map)
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        for i in range(feature_maps.shape[-1]):
+            plt.figure(figsize=(2, 2))
+            plt.imshow(feature_maps[0, :, :, i], cmap='viridis')
+            plt.axis('off')
+            plt.savefig(f'{output_dir}/feature_map_{i}.png')
+            plt.close()
 
