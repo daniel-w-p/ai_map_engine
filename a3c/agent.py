@@ -103,6 +103,8 @@ class Agent:
 
     @staticmethod
     def save_losses_csv(actor_losses, critic_losses, total_losses, output_dir='data/losses'):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         losses_df = pd.DataFrame({
             'Actor Loss': actor_losses,
             'Critic Loss': critic_losses,

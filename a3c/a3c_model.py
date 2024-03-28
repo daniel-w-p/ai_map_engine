@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.0005
+    LEARNING_RATE = 0.001
     CLIP_NORM = 10.0
     COMMON_LAYER_UNITS = 64
     COMMON_LAYER_ACTIVATION = 'relu'
@@ -83,6 +83,8 @@ class A3CModel(Model):
         input_size = input_shape[0]*input_shape[1]*input_shape[2]
         inputs = Input(shape=(input_size,))
         x = Dense(512)(inputs)
+        x = LeakyReLU(alpha=0.1)(x)
+        x = Dense(256)(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = Dense(96)(x)
         x = LeakyReLU(alpha=0.1)(x)

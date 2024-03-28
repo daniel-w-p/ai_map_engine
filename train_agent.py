@@ -18,7 +18,7 @@ def main():
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
     num_agents = 6
-    epochs = 25
+    epochs = 66
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -107,12 +107,13 @@ def main():
         print(f'Epoch {i} finished. Updating main model weights')
         rewards = [reward for _, _, _, _, reward in experiences]
         print(f'Mean reward: {np.mean(rewards)}')
+        print(f'Max reward: {np.max(rewards)}')
 
         # Update the main model based on the experiences collected from agents.
         actor_loss, critic_loss, total_loss = Agent.unpack_exp_and_step(main_model, experiences, action_space)
-        actor_losses.append(actor_loss)
-        critic_losses.append(critic_loss)
-        total_losses.append(total_loss)
+        actor_losses.append(actor_loss.numpy())
+        critic_losses.append(critic_loss.numpy())
+        total_losses.append(total_loss.numpy())
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs
             epoch_dir = f'epoch_{i}/'
