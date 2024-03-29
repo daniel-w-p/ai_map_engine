@@ -2,6 +2,7 @@ import pygame
 from new_game import config, GameCrl, Game
 from new_game.figures import Player
 from a3c import A3CModel, Agent
+import setup
 
 
 def run_game():
@@ -17,7 +18,7 @@ def run_game():
     play_from_checkpoint = True
     e_state, p_state, reward, done = None, None, None, False
 
-    if config.ProjectSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
+    if setup.ProjectSetup.MODES["play_mode"] == setup.GameMode.API_PLAY.value:
         print("Start game in AI mode (model control)")
         env_state_shape = Game.env_state_size()
         plr_state_shape = Player.plr_state_size()
@@ -28,9 +29,9 @@ def run_game():
         e_state, p_state, reward, done = game_control.game_action_api(0)
 
     while True:
-        if config.ProjectSetup.MODES["play_mode"] == config.GameMode.NORMAL.value:
+        if setup.ProjectSetup.MODES["play_mode"] == setup.GameMode.NORMAL.value:
             game_control.normal_loop_body()
-        elif config.ProjectSetup.MODES["play_mode"] == config.GameMode.API_PLAY.value:
+        elif setup.ProjectSetup.MODES["play_mode"] == setup.GameMode.API_PLAY.value:
             action, _ = Agent.choose_action((e_state, p_state), model, True)
             e_state, p_state, reward, done = game_control.game_action_api(action)
             game_control.api_loop_body()

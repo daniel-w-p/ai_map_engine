@@ -1,7 +1,7 @@
 import pygame
 from sys import exit
 from .game import Game
-from .config import ProjectSetup, GameMode
+from setup import ProjectSetup, GameMode
 from .game_background import GameBackground
 
 from enum import Enum

@@ -4,8 +4,10 @@ from enum import Enum
 
 from new_game.map_decoder import MapDecoder, GameParticles
 from new_game.figures import ImagePart, Wood, Cloud, Pear, Apple, Water, Fire, Meteor, Player
-from .config import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, ProjectSetup, GameMode, TimeEvents
+from .config import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_SIDE_MARGIN, MINIMAP_ONE_PIXEL, TimeEvents
 from .game_background import GameBackground
+
+from setup import ProjectSetup, GameMode
 
 
 class GameState(Enum):

@@ -49,7 +49,7 @@ class Player(Sprite):
 
     @staticmethod
     def plr_state_size():
-        return 5  # position_x, position_y, velocity, jump_velocity, direction
+        return 7  # position_x, position_y, velocity, momentum, jump_velocity, direction, on_ground
 
     @property
     def image(self):
@@ -77,7 +77,7 @@ class Player(Sprite):
 
     @property
     def player_state(self):
-        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._jump_v, int(self._right_direction)
+        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._momentum, self._jump_v, int(self._right_direction), int(self._on_ground)
 
     def live_reset(self):
         self._life = self.MAX_LIFE

@@ -3,19 +3,25 @@
 
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU, BatchNormalization
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
+
+import setup
 
 
 class A3CModel(Model):
     LEARNING_RATE = 0.001
     CLIP_NORM = 10.0
     COMMON_LAYER_UNITS = 64
-    COMMON_LAYER_ACTIVATION = 'relu'
+    COMMON_LAYER_ACTIVATION = 'tanh'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
-        self.map_nn = self.create_map_nn(map_input_shape)
+        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN:
+            self.map_nn = self.create_map_nn(map_input_shape)
+        else:
+            self.map_nn = self.create_map_cnn(map_input_shape)
+
         self.plr_nn = self.create_plr_nn(plr_input_shape)
         self.action_space_size = action_space_size
 
@@ -34,11 +40,17 @@ class A3CModel(Model):
     def call(self, inputs: tuple) -> tuple:
         cnn_input, dnn_input = inputs  # states
 
-        flatten = self.flatten(cnn_input)
+        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN:
+            flatten = self.flatten(cnn_input)
 
-        # Inputs goes thru both nn
-        cnn_output = self.map_nn(flatten)
-        dnn_output = self.plr_nn(dnn_input)
+            # Inputs goes thru both nn
+            cnn_output = self.map_nn(flatten)
+            dnn_output = self.plr_nn(dnn_input)
+        else:
+            cnn_output = self.map_nn(cnn_input)
+            dnn_output = self.plr_nn(dnn_input)
+
+            cnn_output = self.flatten(cnn_output)
 
         combined_output = self.combined_output([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
@@ -86,20 +98,23 @@ class A3CModel(Model):
         x = LeakyReLU(alpha=0.1)(x)
         x = Dense(256)(x)
         x = LeakyReLU(alpha=0.1)(x)
-        x = Dense(96)(x)
+        x = Dense(64)(x)
         x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='map_nn_submodel')
 
     @staticmethod
     def create_map_cnn(input_shape):
         inputs = Input(shape=input_shape)
-        x = Conv2D(16, (3, 3))(inputs)
-        x = LeakyReLU(alpha=0.1)(x)
-        x = Conv2D(32, (1, 1))(x)
+        x = Conv2D(16, (5, 5))(inputs)
+        x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(32, (1, 1))(x)
+        x = Conv2D(32, (3, 3))(x)
+        x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
+        x = MaxPool2D()(x)
+        x = Conv2D(64, (1, 1))(x)
+        # x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='map_cnn_submodel')
 
     @staticmethod

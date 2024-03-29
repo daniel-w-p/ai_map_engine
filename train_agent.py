@@ -9,8 +9,10 @@ import tensorflow as tf
 
 from a3c import Agent, A3CModel
 from environment import Environment
-from new_game import Game, GameCrl, config
+from new_game import Game, GameCrl
 from new_game.figures import Player
+
+import setup
 
 
 def main():
@@ -18,7 +20,7 @@ def main():
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
     num_agents = 6
-    epochs = 66
+    epochs = 21
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -119,7 +121,7 @@ def main():
             epoch_dir = f'epoch_{i}/'
             main_model.save_weights(Agent.SAVE_DIR+epoch_dir+Agent.SAVE_FILE)
             # Plotting features (CNN)
-            if config.ProjectSetup.MODES["map_nn_mode"] == config.MapNN.CNN:
+            if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.CNN.value:
                 Agent.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
     # Save last epoch in main localization
@@ -128,13 +130,13 @@ def main():
     Agent.save_losses_csv(actor_losses, critic_losses, total_losses)
     # Plotting losses and features (CNN)
     Agent.plot_losses(actor_losses, critic_losses, total_losses)
-    if config.ProjectSetup.MODES["map_nn_mode"] == config.MapNN.CNN:
+    if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.CNN.value:
         Agent.visualize_feature_maps(main_model, tf.convert_to_tensor([env_state], dtype=tf.float32))
 
 
 if __name__ == "__main__":
     print("This module is not fully implemented yet")
-    config.ProjectSetup.set_api_mode(config.GameMode.API_LEARN)
+    setup.ProjectSetup.set_api_mode(setup.GameMode.API_LEARN)
     mp.set_start_method('spawn')
 
     pygame.init()
