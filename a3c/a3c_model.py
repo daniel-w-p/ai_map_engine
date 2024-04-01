@@ -11,13 +11,13 @@ import setup
 
 class A3CModel(Model):
     LEARNING_RATE = 0.001
-    CLIP_NORM = 10.0
+    CLIP_NORM = 50.0
     COMMON_LAYER_UNITS = 64
-    COMMON_LAYER_ACTIVATION = 'tanh'
+    COMMON_LAYER_ACTIVATION = 'relu'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
-        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN:
+        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN.value:
             self.map_nn = self.create_map_nn(map_input_shape)
         else:
             self.map_nn = self.create_map_cnn(map_input_shape)
@@ -40,7 +40,7 @@ class A3CModel(Model):
     def call(self, inputs: tuple) -> tuple:
         cnn_input, dnn_input = inputs  # states
 
-        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN:
+        if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN.value:
             flatten = self.flatten(cnn_input)
 
             # Inputs goes thru both nn
@@ -61,12 +61,19 @@ class A3CModel(Model):
 
         return actor_output, critic_output
 
-    def actor_loss(self, advantages, actions, action_probs):
-        action_probs = tf.clip_by_value(action_probs, 1e-8, 1 - 1e-8)  # 1e-8 - to prevent log(0) error
+    def actor_loss(self, advantages, actions, action_probs, entropy_beta=0.01):
+        action_probs = tf.clip_by_value(action_probs, 1e-8, 1 - 1e-8)
         log_probs = tf.math.log(action_probs)
+
         selected_log_probs = tf.reduce_sum(log_probs * actions, axis=1, keepdims=True)
+
+        entropy = -tf.reduce_sum(action_probs * log_probs, axis=1)
+        mean_entropy = tf.reduce_mean(entropy)
+
         advantages = tf.squeeze(advantages, axis=1)
-        loss = -tf.reduce_mean(selected_log_probs * advantages)
+        policy_loss = -tf.reduce_mean(selected_log_probs * advantages)
+        loss = policy_loss - entropy_beta * mean_entropy
+
         return loss
 
     def critic_loss(self, estimated_values, true_values):
@@ -94,26 +101,29 @@ class A3CModel(Model):
     def create_map_nn(input_shape):
         input_size = input_shape[0]*input_shape[1]*input_shape[2]
         inputs = Input(shape=(input_size,))
-        x = Dense(512)(inputs)
+        x = Dense(1024)(inputs)
+        x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = Dense(256)(x)
+        x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = Dense(64)(x)
+        x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='map_nn_submodel')
 
     @staticmethod
     def create_map_cnn(input_shape):
         inputs = Input(shape=input_shape)
-        x = Conv2D(16, (5, 5))(inputs)
+        x = Conv2D(32, (5, 5), padding="SAME")(inputs)
         x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(32, (3, 3))(x)
+        x = Conv2D(64, (3, 3), padding="SAME")(x)
         x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(64, (1, 1))(x)
+        x = Conv2D(128, (1, 1))(x)
         # x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='map_cnn_submodel')
 

@@ -307,12 +307,12 @@ class Game:
     def calculate_reward(self):
         scale_distance_param = 0.005
         scale_time_param = 1e-8
-        life_factor = 0.2
+        life_factor = 0.3
         score_factor = 1.2
         self._distance = self._actual_left + self._player.rect.x
         play_time = pygame.time.get_ticks() - self._play_time_start
         #  minus here on the elapsed time should make AI to move
-        return life_factor * self._player.life * score_factor * self._score - scale_time_param * play_time  # + scale_distance_param * self._distance
+        return self._player.life - self._player.MAX_LIFE + self._score  # - scale_time_param * play_time  # + scale_distance_param * self._distance
 
     @property
     def game_state(self) -> bool:  # check if game should be finish

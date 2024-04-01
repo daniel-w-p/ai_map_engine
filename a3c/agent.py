@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 from matplotlib import pyplot as plt
@@ -31,7 +32,7 @@ class Agent:
         model.load_weights(save_dir)
 
     @staticmethod
-    def choose_action(states, model, play=False):
+    def choose_action(states, model, play=False, epsilon=0.075):
         env_state, plr_state = states
         state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor([plr_state], dtype=tf.float32)
@@ -41,7 +42,10 @@ class Agent:
         if play:
             action = tf.argmax(action_probs, axis=-1)[0]
         else:
-            action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
+            if np.random.rand() < epsilon:
+                action = tf.random.uniform([1], minval=0, maxval=action_probs.shape[-1], dtype=tf.int64)[0]
+            else:
+                action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
         return action.numpy(), value
 
     @staticmethod
@@ -67,25 +71,23 @@ class Agent:
         model.set_weights(new_weights)
 
         episode = 0
+        end_game_penalty = -15
         local_experience = []
 
         while episode < Agent.EXP_COUNTER:
-            done = False
             states = env.reset()
-            env_state, plr_state = states
-            last_reward = 0
+            action, value = Agent.choose_action(states, model)
+            next_env_state, next_plr_state, reward, done = env.step(action)
+            last_reward = reward
             while not done and episode < Agent.EXP_COUNTER:
                 action, value = Agent.choose_action(states, model)
                 next_env_state, next_plr_state, reward, done = env.step(action)
                 _, next_value = model((tf.convert_to_tensor([next_env_state], dtype=tf.float32),
                                        tf.convert_to_tensor([next_plr_state], dtype=tf.float32)))
 
-                if done:
-                    reward -= 5
+                # reward, last_reward = reward - last_reward, reward  # check without of this
 
-                reward, last_reward = reward - last_reward, reward
-
-                target_value = reward + (1 - done) * gamma * next_value
+                target_value = reward + (1 - done) * gamma * next_value + int(done) * end_game_penalty
                 advantage = target_value - value
 
                 experience = (env_state, plr_state, action, advantage.numpy(), reward)
@@ -95,9 +97,9 @@ class Agent:
                 states = (next_env_state, next_plr_state)
                 episode += 1
 
-            if episode % 101 == 0:
-                Agent.unpack_exp_and_step(model, local_experience, action_space)
-                local_experience.clear()
+                if episode % 101 == 0:
+                    Agent.unpack_exp_and_step(model, local_experience, action_space)
+                    local_experience.clear()
 
         tf.keras.backend.clear_session()
 
