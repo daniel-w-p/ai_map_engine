@@ -49,7 +49,7 @@ class Player(Sprite):
 
     @staticmethod
     def plr_state_size():
-        return 7  # position_x, position_y, velocity, momentum, jump_velocity, direction, on_ground
+        return 7  # position_x, position_y, velocity, momentum, jump_velocity, direction,     distance (from map)
 
     @property
     def image(self):
@@ -76,8 +76,12 @@ class Player(Sprite):
         return self._scroll_value > 0
 
     @property
+    def direction(self):
+        return self._right_direction
+
+    @property
     def player_state(self):
-        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._momentum, self._jump_v, int(self._right_direction), int(self._on_ground)
+        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._momentum, self._jump_v, int(self._right_direction)
 
     def live_reset(self):
         self._life = self.MAX_LIFE

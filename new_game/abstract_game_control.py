@@ -39,6 +39,14 @@ class AbstractGameControl:
     def back(self):
         return self._background
 
+    @property
+    def reward(self):
+        reward = self.calculate_reward()
+        return reward
+
+    def calculate_reward(self):
+        return self._game.life_score + self._game.points_score
+
     def action_from_ai(self, action):
         self._action = action
 
@@ -63,7 +71,7 @@ class AbstractGameControl:
 
         env_state, plr_state = self._game.environment_state
 
-        reward = self._game.reward
+        reward = self.reward
 
         self._done = self._game.game_state
 

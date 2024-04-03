@@ -12,7 +12,7 @@ import setup
 class A3CModel(Model):
     LEARNING_RATE = 0.001
     CLIP_NORM = 50.0
-    COMMON_LAYER_UNITS = 64
+    COMMON_LAYER_UNITS = 128
     COMMON_LAYER_ACTIVATION = 'relu'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
@@ -116,15 +116,16 @@ class A3CModel(Model):
     def create_map_cnn(input_shape):
         inputs = Input(shape=input_shape)
         x = Conv2D(32, (5, 5), padding="SAME")(inputs)
+        x = Conv2D(64, (3, 3), padding="SAME", strides=2)(x)
         x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(64, (3, 3), padding="SAME")(x)
+        x = Conv2D(64, (5, 5), padding="SAME")(x)
+        x = Conv2D(128, (3, 3), padding="SAME", strides=2)(x)
         x = BatchNormalization()(x)
         x = LeakyReLU(alpha=0.1)(x)
         x = MaxPool2D()(x)
-        x = Conv2D(128, (1, 1))(x)
-        # x = LeakyReLU(alpha=0.1)(x)
+        x = Conv2D(256, (1, 1))(x)
         return Model(inputs, x, name='map_cnn_submodel')
 
     @staticmethod

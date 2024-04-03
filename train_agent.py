@@ -19,8 +19,8 @@ def main():
     env_state_shape = Game.env_state_size()
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
-    num_agents = 7
-    epochs = 10
+    num_agents = 6
+    epochs = 20
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow

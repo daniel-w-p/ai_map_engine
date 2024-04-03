@@ -300,19 +300,40 @@ class Game:
                     if i < mini_height - 1:
                         mini_map[i+1, j] = 0.6
         self._environment_state = mini_map.reshape(mini_height, mini_width, 1)
+        return mini_map
+
+    def update_player_state(self, mini_map):
+        mini_height, mini_width = mini_map.shape
+        find_plr = False
+        for i in range(mini_height):
+            for j in range(mini_width):
+                if mini_map[i, j] == 0.6:
+                    find_plr = True
+                    break  # to go to next line
+                if find_plr and mini_map[i, j] == 0.4:
+                    if self._player.direction:
+                        pos_start = min(j+self._player.rect.x//MINIMAP_ONE_PIXEL, mini_width-1)
+                        pos_stop = min(pos_start+5, mini_width-1)
+                        for k in range(pos_start, pos_stop):
+                            if mini_map[i, k] == 0:
+                                # print("R ", (k * MINIMAP_ONE_PIXEL - self._player.rect.x) / MINIMAP_ONE_PIXEL)
+                                return (k * MINIMAP_ONE_PIXEL - self._player.rect.x) / MINIMAP_ONE_PIXEL
+                        return 5.
+                    else:
+                        # print("L ", (self._player.rect.x - j * MINIMAP_ONE_PIXEL) / MINIMAP_ONE_PIXEL)
+                        return (self._player.rect.x - j * MINIMAP_ONE_PIXEL) / MINIMAP_ONE_PIXEL
+        return 5.
 
     def add_reward(self, reward: float):
         self._score += reward
 
-    def calculate_reward(self):
-        scale_distance_param = 0.005
-        scale_time_param = 1e-8
-        life_factor = 0.3
-        score_factor = 1.2
-        self._distance = self._actual_left + self._player.rect.x
-        play_time = pygame.time.get_ticks() - self._play_time_start
-        #  minus here on the elapsed time should make AI to move
-        return self._player.life - self._player.MAX_LIFE + self._score  # - scale_time_param * play_time  # + scale_distance_param * self._distance
+    @property
+    def points_score(self):
+        return self._score
+
+    @property
+    def life_score(self):
+        return self._player.life - self._player.MAX_LIFE
 
     @property
     def game_state(self) -> bool:  # check if game should be finish
@@ -321,13 +342,9 @@ class Game:
 
     @property
     def environment_state(self):
-        self.update_environment_state()
-        return self._environment_state, self._player.player_state
-
-    @property
-    def reward(self):
-        reward = self.calculate_reward()
-        return reward
+        mini_map = self.update_environment_state()
+        distance_to_hole = self.update_player_state(mini_map)
+        return self._environment_state, (*self._player.player_state, distance_to_hole)
 
     def is_game_over(self):
         return self._game_state == GameState.END.value
@@ -337,5 +354,7 @@ class Game:
 
     def is_game_running(self):
         return self._game_state == GameState.RUN.value
+
+
 
 

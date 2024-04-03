@@ -24,15 +24,19 @@ class Agent:
         return self.env_state_shape, self.player_state_shape, self.action_space
 
     @staticmethod
-    def save_model(model, save_dir=SAVE_DIR+SAVE_FILE):
-        model.save_weights(save_dir)
+    def save_model(model, save_file=SAVE_DIR+SAVE_FILE):
+        model.save_weights(save_file)
 
     @staticmethod
-    def load_model(model, save_dir=SAVE_DIR+SAVE_FILE):
-        model.load_weights(save_dir)
+    def load_model(model, load_file=SAVE_DIR+SAVE_FILE):
+        if os.path.exists(load_file+'.index'):
+            model.load_weights(load_file)
+            print("Weights loaded successfully.")
+        else:
+            print("Weights file does not exist.")
 
     @staticmethod
-    def choose_action(states, model, play=False, epsilon=0.075):
+    def choose_action(states, model, play=False, epsilon=0.175):
         env_state, plr_state = states
         state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor([plr_state], dtype=tf.float32)
