@@ -10,7 +10,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 400  # how many experiences (actions in game)
+    EXP_COUNTER = 1200  # how many experiences (actions in game)
     SAVE_DIR = './saves/'
     SAVE_FILE = 'a3c_model'
 
@@ -36,7 +36,7 @@ class Agent:
             print("Weights file does not exist.")
 
     @staticmethod
-    def choose_action(states, model, play=False, epsilon=0.175):
+    def choose_action(states, model, play=False, epsilon=0.05):
         env_state, plr_state = states
         state_env_tensor = tf.convert_to_tensor([env_state], dtype=tf.float32)
         state_plr_tensor = tf.convert_to_tensor([plr_state], dtype=tf.float32)
@@ -44,6 +44,7 @@ class Agent:
         action_probs, value = model((state_env_tensor, state_plr_tensor), training=False)
 
         if play:
+            # action = tf.random.categorical(tf.math.log(action_probs), 1)[0, 0]
             action = tf.argmax(action_probs, axis=-1)[0]
         else:
             if np.random.rand() < epsilon:
