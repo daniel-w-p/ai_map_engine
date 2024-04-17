@@ -1,12 +1,15 @@
-# The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
-# This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
-
+import os
+os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU, BatchNormalization
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 import setup
+
+
+# The idea is to get data from environment as 40x30 'image' (real is 1000x750 but one pixel from map is 25 size)
+# This image is analyzed via CNN and data about player (velocity, direction, position etc.) are analyzed via DNN
 
 
 class A3CModel(Model):
@@ -76,18 +79,19 @@ class A3CModel(Model):
 
         return loss
 
-    def critic_loss(self, estimated_values, true_values):
+    def critic_loss(self, true_values, estimated_values):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
     @tf.function(reduce_retracing=True)
-    def train_step(self, env_state, plr_state, one_hot_action, advantages, rewards):
+    def train_step(self, env_state, plr_state, one_hot_action, advantages, rewards, next_values, gamma=0.98):
 
         with tf.GradientTape() as tape:
             action_probs, values = self.call((env_state, plr_state))
 
             actor_loss = self.actor_loss(advantages, one_hot_action, action_probs)
 
-            critic_loss = self.critic_loss(rewards, tf.squeeze(values))
+            true_values = rewards + gamma * tf.squeeze(next_values)
+            critic_loss = self.critic_loss(true_values, tf.squeeze(values))
 
             total_loss = actor_loss + critic_loss
 
@@ -99,7 +103,7 @@ class A3CModel(Model):
 
     @staticmethod
     def create_map_nn(input_shape):
-        input_size = input_shape[0]*input_shape[1]*input_shape[2]
+        input_size = input_shape[0] * input_shape[1] * input_shape[2]
         inputs = Input(shape=(input_size,))
         x = Dense(1024)(inputs)
         x = BatchNormalization()(x)
@@ -145,5 +149,3 @@ class A3CModel(Model):
         x = Dense(32)(x)
         x = LeakyReLU(alpha=0.1)(x)
         return Model(inputs, x, name='plr_nn_submodel')
-
-

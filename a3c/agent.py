@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -55,15 +54,16 @@ class Agent:
 
     @staticmethod
     def unpack_exp_and_step(model, experiences, action_space):
-        env_state, plr_state, actions, advantages, rewards = zip(*experiences)
+        env_state, plr_state, actions, advantages, rewards, next_val = zip(*experiences)
 
         one_hot_action = tf.one_hot(actions, depth=action_space)
         env_state = tf.convert_to_tensor(env_state, dtype=tf.float32)
         plr_state = tf.convert_to_tensor(plr_state, dtype=tf.float32)
         advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
         rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
+        next_val = tf.convert_to_tensor(next_val, dtype=tf.float32)
 
-        return model.train_step(env_state, plr_state, one_hot_action, advantages, rewards)
+        return model.train_step(env_state, plr_state, one_hot_action, advantages, rewards, next_val)
 
     @staticmethod
     def learn(agent_id, shapes, model_weights_queue, experience_queue, gamma=0.98):
@@ -95,7 +95,7 @@ class Agent:
                 target_value = reward + (1 - done) * gamma * next_value + int(done) * end_game_penalty
                 advantage = target_value - value
 
-                experience = (env_state, plr_state, action, advantage.numpy(), reward)
+                experience = (env_state, plr_state, action, advantage.numpy(), reward, next_value)
                 experience_queue.put(experience)  # ((agent_id, experience))
                 local_experience.append(experience)
 

@@ -19,8 +19,8 @@ def main():
     env_state_shape = Game.env_state_size()
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
-    num_agents = 6
-    epochs = 20
+    num_agents = 4
+    epochs = 5
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -107,7 +107,7 @@ def main():
 
         # Some logs.
         print(f'Epoch {i} finished. Updating main model weights')
-        rewards = [reward for _, _, _, _, reward in experiences]
+        rewards = [reward for _, _, _, _, reward, _ in experiences]
         print(f'Mean reward: {np.mean(rewards)}')
         print(f'Max reward: {np.max(rewards)}')
 
