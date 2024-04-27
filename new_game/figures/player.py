@@ -1,3 +1,4 @@
+import numpy as np
 import pygame
 import math
 from pygame.sprite import Sprite
@@ -44,6 +45,8 @@ class Player(Sprite):
         self._right_direction = True
         self._on_ground = False
 
+        self.state_series = []
+
         self.group = pygame.sprite.GroupSingle()
         self.group.add(self)
 
@@ -80,8 +83,13 @@ class Player(Sprite):
         return self._right_direction
 
     @property
+    def player_state_now(self):
+        return (self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._momentum,
+                self._jump_v, int(self._right_direction))
+
+    @property
     def player_state(self):
-        return self.rect.x / MINIMAP_ONE_PIXEL, self.rect.y / MINIMAP_ONE_PIXEL, self._velocity, self._momentum, self._jump_v, int(self._right_direction)
+        return self.state_series
 
     def live_reset(self):
         self._life = self.MAX_LIFE
@@ -100,6 +108,9 @@ class Player(Sprite):
         self.live_reset()
         self.position_reset()
         self.movement_reset()
+
+        states = np.array(self.player_state_now)
+        self.state_series = np.tile(states[np.newaxis, :], (10, 1))
 
     def update_animation(self, delta_move):
         self._animation_index += math.fabs(delta_move)
@@ -211,5 +222,7 @@ class Player(Sprite):
             if self._scroll_value < 0:
                 self._scroll_value = 0
         self.animation()
+
+        self.state_series = np.vstack([self.state_series[1:], self.player_state_now])
 
 

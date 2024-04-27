@@ -2,7 +2,7 @@ import os
 os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU, BatchNormalization
+from tensorflow.keras.layers import Input, Dense, GRU, Conv2D, MaxPool2D, Flatten, Concatenate, LeakyReLU, BatchNormalization
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
 import setup
@@ -13,20 +13,29 @@ import setup
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0001
     CLIP_NORM = 50.0
     COMMON_LAYER_UNITS = 128
     COMMON_LAYER_ACTIVATION = 'relu'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
+
+        self.action_space_size = action_space_size
+
+        # map network
         if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN.value:
             self.map_nn = self.create_map_nn(map_input_shape)
         else:
             self.map_nn = self.create_map_cnn(map_input_shape)
 
-        self.plr_nn = self.create_plr_nn(plr_input_shape)
-        self.action_space_size = action_space_size
+        # player network
+        self.gru = GRU(64, return_sequences=True, return_state=False)
+        self.gru_out = GRU(32)
+
+        self.p_dense = Dense(64)
+        self.p_activ = LeakyReLU(alpha=0.2)
+        # self.p_norm = BatchNormalization()
 
         # Create layers for join both NN
         self.combined_output = Concatenate()
@@ -45,15 +54,17 @@ class A3CModel(Model):
 
         if setup.ProjectSetup.MODES["map_nn_mode"] == setup.MapNN.DNN.value:
             flatten = self.flatten(cnn_input)
-
-            # Inputs goes thru both nn
             cnn_output = self.map_nn(flatten)
-            dnn_output = self.plr_nn(dnn_input)
         else:
             cnn_output = self.map_nn(cnn_input)
-            dnn_output = self.plr_nn(dnn_input)
-
             cnn_output = self.flatten(cnn_output)
+
+        dnn_output = self.gru(dnn_input)
+        dnn_output = self.gru_out(dnn_output)
+
+        dnn_output = self.p_dense(dnn_output)
+        dnn_output = self.p_activ(dnn_output)
+        # dnn_output = self.p_norm(dnn_output)
 
         combined_output = self.combined_output([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
@@ -73,7 +84,7 @@ class A3CModel(Model):
         entropy = -tf.reduce_sum(action_probs * log_probs, axis=1)
         mean_entropy = tf.reduce_mean(entropy)
 
-        advantages = tf.squeeze(advantages, axis=1)
+        # advantages = tf.squeeze(advantages, axis=1)
         policy_loss = -tf.reduce_mean(selected_log_probs * advantages)
         loss = policy_loss - entropy_beta * mean_entropy
 
@@ -141,11 +152,3 @@ class A3CModel(Model):
         x = Conv2D(256, (1, 1))(x)
         return Model(inputs, x, name='map_cnn_submodel')
 
-    @staticmethod
-    def create_plr_nn(input_shape):
-        inputs = Input(shape=(input_shape,))
-        x = Dense(64)(inputs)
-        x = LeakyReLU(alpha=0.1)(x)
-        x = Dense(32)(x)
-        x = LeakyReLU(alpha=0.1)(x)
-        return Model(inputs, x, name='plr_nn_submodel')

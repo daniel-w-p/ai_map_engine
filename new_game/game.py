@@ -58,6 +58,7 @@ class Game:
             self._game_background.set_player_life_text(str(self._player.life))
 
         self.init_map()
+        self._player.reset()
 
     def reset_game(self):
         self._map = 0
@@ -333,7 +334,7 @@ class Game:
 
     @property
     def life_score(self):
-        return self._player.life - self._player.MAX_LIFE
+        return self._player.MAX_LIFE - self._player.life
 
     @property
     def game_state(self) -> bool:  # check if game should be finish
@@ -344,7 +345,7 @@ class Game:
     def environment_state(self):
         mini_map = self.update_environment_state()
         distance_to_hole = self.update_player_state(mini_map)
-        return self._environment_state, (*self._player.player_state, distance_to_hole)
+        return self._environment_state, self._player.player_state  # (*self._player.player_state, distance_to_hole)
 
     def is_game_over(self):
         return self._game_state == GameState.END.value

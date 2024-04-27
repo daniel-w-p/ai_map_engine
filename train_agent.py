@@ -19,8 +19,8 @@ def main():
     env_state_shape = Game.env_state_size()
     plr_state_shape = Player.plr_state_size()
     action_space = GameCrl.action_space_size()
-    num_agents = 4
-    epochs = 5
+    num_agents = 10
+    epochs = 15
     start_from_checkpoint = True
 
     # Dynamic GPU memory allocation for TensorFlow
@@ -89,17 +89,6 @@ def main():
                 print(f'\rEpoch: {i} --> 100% Complete ')
                 print("Total experiences:", len(experiences))
                 break  # when collect all
-            # elif last_step < actual_step // step_size:
-            #     last_step = actual_step // step_size
-            #     percent_complete = (actual_step / total_steps) * 100
-            #
-            #     # Progress bar
-            #     num_hashes = int((percent_complete / 100) * 20)
-            #     progress_bar = '#' * num_hashes + '-' * (20 - num_hashes)
-            #
-            #     # Progress
-            #     sys.stdout.write(f'\rEpoch: {i} --> [{progress_bar}] {percent_complete:.1f}% Complete ')
-            #     sys.stdout.flush()
 
         # Fin
         for agent in agents:
@@ -113,9 +102,11 @@ def main():
 
         # Update the main model based on the experiences collected from agents.
         actor_loss, critic_loss, total_loss = Agent.unpack_exp_and_step(main_model, experiences, action_space)
-        actor_losses.append(actor_loss.numpy())
-        critic_losses.append(critic_loss.numpy())
-        total_losses.append(total_loss.numpy())
+        actor_losses.append(actor_loss)
+        critic_losses.append(critic_loss)
+        total_losses.append(total_loss)
+
+        print(f"Losses:\n t - {total_losses} ;\n a - {actor_losses} ;\n c - {critic_losses}")
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs
             epoch_dir = f'epoch_{i}/'
