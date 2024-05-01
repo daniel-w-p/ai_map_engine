@@ -13,14 +13,17 @@ import setup
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.0001
-    CLIP_NORM = 50.0
+    LEARNING_RATE = 0.00001
+    LEARNING_RATE_DECAY_FACTOR = 0.98
+    CLIP_NORM = 20.0
     COMMON_LAYER_UNITS = 128
-    COMMON_LAYER_ACTIVATION = 'relu'
+    COMMON_LAYER_ACTIVATION = 'tanh'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
 
+        self.last_epoch = 0
+        self.learning_rate = self.LEARNING_RATE
         self.action_space_size = action_space_size
 
         # map network
@@ -84,7 +87,6 @@ class A3CModel(Model):
         entropy = -tf.reduce_sum(action_probs * log_probs, axis=1)
         mean_entropy = tf.reduce_mean(entropy)
 
-        # advantages = tf.squeeze(advantages, axis=1)
         policy_loss = -tf.reduce_mean(selected_log_probs * advantages)
         loss = policy_loss - entropy_beta * mean_entropy
 
@@ -94,7 +96,11 @@ class A3CModel(Model):
         return tf.keras.losses.mean_squared_error(true_values, estimated_values)
 
     @tf.function(reduce_retracing=True)
-    def train_step(self, env_state, plr_state, one_hot_action, advantages, rewards, next_values, gamma=0.98):
+    def train_step(self, env_state, plr_state, one_hot_action, advantages, rewards, next_values, epoch=0, gamma=0.98):
+        if epoch != self.last_epoch:
+            self.learning_rate = self.learning_rate * (self.LEARNING_RATE_DECAY_FACTOR ** epoch)
+            self.optimizer.learning_rate.assign(self.learning_rate)
+            self.last_epoch = epoch
 
         with tf.GradientTape() as tape:
             action_probs, values = self.call((env_state, plr_state))

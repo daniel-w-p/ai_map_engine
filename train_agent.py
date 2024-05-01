@@ -101,11 +101,12 @@ def main():
         print(f'Max reward: {np.max(rewards)}')
 
         # Update the main model based on the experiences collected from agents.
-        actor_loss, critic_loss, total_loss = Agent.unpack_exp_and_step(main_model, experiences, action_space)
+        actor_loss, critic_loss, total_loss = Agent.unpack_exp_and_step(main_model, experiences, action_space, i)
         actor_losses.append(actor_loss)
         critic_losses.append(critic_loss)
         total_losses.append(total_loss)
 
+        print(f"Actual learning rate: {main_model.learning_rate} in epoch {i}")
         print(f"Losses:\n t - {total_losses} ;\n a - {actor_losses} ;\n c - {critic_losses}")
 
         if i > 0 and i % 5 == 0:  # save interval - 5 epochs

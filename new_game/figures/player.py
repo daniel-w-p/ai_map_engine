@@ -139,8 +139,8 @@ class Player(Sprite):
         self._velocity += 1
 
     def retard(self):
+        self._momentum = self.MAX_VELOCITY - 1 if self._velocity > 0 else 0
         self._velocity = 0
-        self._momentum = self.MAX_VELOCITY - 1
 
     def scroll_screen(self, to_right: bool):
         if self._scroll_value == 0:

@@ -54,7 +54,7 @@ class Agent:
         return action.numpy(), value
 
     @staticmethod
-    def unpack_exp_and_step(model, experiences, action_space):
+    def unpack_exp_and_step(model, experiences, action_space, epoch):
         env_state, plr_state, actions, advantages, rewards, next_val = zip(*experiences)
 
         # one_hot_action = tf.one_hot(actions, depth=action_space)
@@ -71,10 +71,10 @@ class Agent:
         e_states = np.array(env_state)
         p_states = np.array(plr_state)
 
-        actions = actions.reshape(-1).astype(np.float32)
-        advantages = advantages.reshape(-1).astype(np.float32)
-        rewards = rewards.reshape(-1).astype(np.float32)
-        next_val = next_val.reshape(-1).astype(np.float32)
+        actions = actions.reshape(-1, 1).astype(np.float32)
+        advantages = advantages.reshape(-1, 1).astype(np.float32)
+        rewards = rewards.reshape(-1, 1).astype(np.float32)
+        next_val = next_val.reshape(-1, 1).astype(np.float32)
 
         e_states = e_states.reshape(-1, e_states.shape[-3], e_states.shape[-2], e_states.shape[-1])
         p_states = p_states.reshape(-1, p_states.shape[-2], p_states.shape[-1])
@@ -100,7 +100,7 @@ class Agent:
                                                                     split_rewards, split_next_val):
             one_hot_action = tf.one_hot(action, depth=action_space)
 
-            a, c, t = model.train_step(e_states, p_states, one_hot_action, advantages, rewards, next_val)
+            a, c, t = model.train_step(e_states, p_states, one_hot_action, advantages, rewards, next_val, epoch)
             actor_loss.append(a)
             critic_loss.append(c)
             total_loss.append(t)
