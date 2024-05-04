@@ -13,11 +13,9 @@ import setup
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.00001
+    LEARNING_RATE = 0.001
     LEARNING_RATE_DECAY_FACTOR = 0.98
     CLIP_NORM = 20.0
-    COMMON_LAYER_UNITS = 128
-    COMMON_LAYER_ACTIVATION = 'tanh'
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
@@ -38,15 +36,21 @@ class A3CModel(Model):
 
         self.p_dense = Dense(64)
         self.p_activ = LeakyReLU(alpha=0.2)
-        # self.p_norm = BatchNormalization()
+        self.p_norm = BatchNormalization()
 
         # Create layers for join both NN
         self.combined_output = Concatenate()
         self.flatten = Flatten()
 
-        # Create actor critic common and output layers
-        self.common_dense = Dense(self.COMMON_LAYER_UNITS, activation=self.COMMON_LAYER_ACTIVATION)
-        self.actor_out = Dense(action_space_size, activation='softmax')
+        # Actor-Critic output
+        self.actor_dense = Dense(16)
+        self.actor_activation = LeakyReLU(alpha=0.1)
+        self.actor_norm = BatchNormalization()
+        self.actor_out = Dense(1, activation='sigmoid')
+
+        self.critic_dense = Dense(16)
+        self.critic_activation = LeakyReLU(alpha=0.1)
+        self.critic_norm = BatchNormalization()
         self.critic_out = Dense(1, activation='linear')
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.LEARNING_RATE)
@@ -67,15 +71,22 @@ class A3CModel(Model):
 
         dnn_output = self.p_dense(dnn_output)
         dnn_output = self.p_activ(dnn_output)
-        # dnn_output = self.p_norm(dnn_output)
+        dnn_output = self.p_norm(dnn_output)
 
         combined_output = self.combined_output([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
 
         # Actor & critic output - Policy & Value
-        actor_output = self.actor_out(common_output)
-        critic_output = self.critic_out(common_output)
+        a_out = self.actor_dense(common_output)
+        a_out = self.actor_activation(a_out)
+        a_out = self.actor_norm(a_out)
 
+        c_out = self.critic_dense(common_output)
+        c_out = self.critic_activation(c_out)
+        c_out = self.critic_norm(c_out)
+
+        actor_output = self.actor_out(a_out)
+        critic_output = self.critic_out(c_out)
         return actor_output, critic_output
 
     def actor_loss(self, advantages, actions, action_probs, entropy_beta=0.01):
