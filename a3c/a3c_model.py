@@ -13,9 +13,9 @@ import setup
 
 
 class A3CModel(Model):
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0005
     LEARNING_RATE_DECAY_FACTOR = 0.98
-    CLIP_NORM = 20.0
+    CLIP_NORM = 10.0
 
     def __init__(self, map_input_shape, plr_input_shape, action_space_size):
         super(A3CModel, self).__init__()
@@ -31,22 +31,26 @@ class A3CModel(Model):
             self.map_nn = self.create_map_cnn(map_input_shape)
 
         # player network
-        self.gru = GRU(64, return_sequences=True, return_state=False)
-        self.gru_out = GRU(32)
+        self.gru = GRU(128, return_sequences=True, return_state=False)
+        self.gru_out = GRU(64)
 
         self.p_dense = Dense(64)
-        self.p_activ = LeakyReLU(alpha=0.2)
+        self.p_activation = LeakyReLU(alpha=0.2)
         self.p_norm = BatchNormalization()
 
         # Create layers for join both NN
         self.combined_output = Concatenate()
         self.flatten = Flatten()
 
+        self.common_dense = Dense(64)
+        self.common_activation = LeakyReLU(alpha=0.2)
+        self.common_norm = BatchNormalization()
+
         # Actor-Critic output
         self.actor_dense = Dense(16)
         self.actor_activation = LeakyReLU(alpha=0.1)
         self.actor_norm = BatchNormalization()
-        self.actor_out = Dense(1, activation='sigmoid')
+        self.actor_out = Dense(action_space_size, activation='softmax')
 
         self.critic_dense = Dense(16)
         self.critic_activation = LeakyReLU(alpha=0.1)
@@ -70,11 +74,13 @@ class A3CModel(Model):
         dnn_output = self.gru_out(dnn_output)
 
         dnn_output = self.p_dense(dnn_output)
-        dnn_output = self.p_activ(dnn_output)
+        dnn_output = self.p_activation(dnn_output)
         dnn_output = self.p_norm(dnn_output)
 
         combined_output = self.combined_output([cnn_output, dnn_output])
         common_output = self.common_dense(combined_output)
+        common_output = self.common_activation(common_output)
+        common_output = self.common_norm(common_output)
 
         # Actor & critic output - Policy & Value
         a_out = self.actor_dense(common_output)

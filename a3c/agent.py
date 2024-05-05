@@ -9,7 +9,7 @@ from environment import Environment
 
 
 class Agent:
-    EXP_COUNTER = 1200  # how many experiences (actions in game)
+    EXP_COUNTER = 2000  # how many experiences (actions in game)
     SAVE_DIR = './saves/'
     SAVE_FILE = 'a3c_model'
 
